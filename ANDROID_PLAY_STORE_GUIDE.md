@@ -2,9 +2,9 @@
 
 - **Application Name**: Trussets
 - **Developer**: Brand Origin
-- **Application ID (Package Name)**: `in.brandorigin.trussets`
-- **Version Name**: `1.0.0`
-- **Version Code**: `1`
+- **Application ID (Package Name)**: `com.trussets.app`
+- **Version Name**: `1.0.1`
+- **Version Code**: `2`
 - **Compile / Target SDK**: `35` (Android 15 — Google Play Store compliant)
 - **Min SDK**: `24` (Android 7.0+)
 - **Production Backend**: `https://ais-pre-6omlvt4qhajgkvvfwj4akz-416483381564.asia-east1.run.app`
@@ -16,7 +16,7 @@
 The Trussets Android project (`/android`) uses **Capacitor 8** wrapping the production React application and routing all `/api/*` and `/uploads/*` requests to the live production backend (`src/utils/capacitorBridge.ts`).
 - **Single Source of Truth**: Website, Android App, and Admin Portal share the exact same database, user accounts, OTP authentication, property listings, subscription plans, saved properties, and enquiries.
 - **Native Capabilities**:
-  - `@capacitor/app`: Android Hardware Back Button navigation across modals, property detail pages, and tabs; Deep Link (`https://` App Links and `in.brandorigin.trussets://`) routing.
+  - `@capacitor/app`: Android Hardware Back Button navigation across modals, property detail pages, and tabs; Deep Link (`https://` App Links and `com.trussets.app://`) routing.
   - `@capacitor/geolocation`: Native Android Fine/Coarse GPS location permission prompt & reverse geocoding.
   - `@capacitor/network`: Real-time online/offline connectivity detection and automatic data resync on reconnect.
   - `@capacitor/status-bar` & `@capacitor/splash-screen`: Official Trussets `#77101F` crimson status bar and launch splash screen.

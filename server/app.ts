@@ -66,7 +66,7 @@ export async function startServer() {
         relation: ['delegate_permission/common.handle_all_urls'],
         target: {
           namespace: 'android_app',
-          package_name: 'in.brandorigin.trussets',
+          package_name: 'com.trussets.app',
           sha256_cert_fingerprints: process.env.ANDROID_SHA256_FINGERPRINT
             ? [process.env.ANDROID_SHA256_FINGERPRINT]
             : ['00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00'],

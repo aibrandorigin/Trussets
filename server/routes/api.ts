@@ -4634,10 +4634,10 @@ apiRouter.get('/android/config', (_req, res) => {
 
   res.json({
     appName: 'Trussets',
-    applicationId: 'in.brandorigin.trussets',
+    applicationId: 'com.trussets.app',
     developer: 'Brand Origin',
-    versionName: '1.0.0',
-    versionCode: 1,
+    versionName: '1.0.1',
+    versionCode: 2,
     targetSdk: 35,
     minSdk: 24,
     productionBackendUrl:

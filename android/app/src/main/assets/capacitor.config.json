@@ -1,5 +1,5 @@
 {
-	"appId": "in.brandorigin.trussets",
+	"appId": "com.trussets.app",
 	"appName": "Trussets",
 	"webDir": "dist",
 	"bundledWebRuntime": false,

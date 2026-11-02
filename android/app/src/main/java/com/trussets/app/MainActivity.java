@@ -1,4 +1,4 @@
-package in.brandorigin.trussets;
+package com.trussets.app;
 
 import com.getcapacitor.BridgeActivity;
 

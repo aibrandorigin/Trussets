@@ -11,7 +11,10 @@ android/local.properties
 android/.gradle/
 android/app/build/
 !android/app/trussets-upload-key.jks
+!android/app/trussets-upload-key.jks.b64
 !android/trussets-upload-key.jks
 !android/app/upload_certificate.pem
+!public/upload_certificate.pem
+
 
 

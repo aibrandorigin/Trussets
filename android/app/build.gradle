@@ -24,6 +24,13 @@ if (!resolvedKeystoreFile.exists()) {
     }
 }
 
+// If binary .jks was skipped by git sync, restore deterministic keystore from tracked Base64 text file
+if (!resolvedKeystoreFile.exists() && file("trussets-upload-key.jks.b64").exists()) {
+    resolvedKeystoreFile = file("trussets-upload-key.jks")
+    String b64Content = file("trussets-upload-key.jks.b64").text.replaceAll("\\s+", "")
+    resolvedKeystoreFile.bytes = b64Content.decodeBase64()
+}
+
 // Guarantee keystore exists so release AAB/APK is NEVER unsigned
 if (!resolvedKeystoreFile.exists()) {
     resolvedKeystoreFile = file("trussets-upload-key.jks")

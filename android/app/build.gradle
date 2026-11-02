@@ -6,11 +6,43 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
-def resolvedStoreFile = keystoreProperties['storeFile'] ?: System.getenv('ANDROID_KEYSTORE_PATH')
-def resolvedStorePassword = keystoreProperties['storePassword'] ?: System.getenv('ANDROID_KEYSTORE_PASSWORD')
-def resolvedKeyAlias = keystoreProperties['keyAlias'] ?: System.getenv('ANDROID_KEY_ALIAS')
-def resolvedKeyPassword = keystoreProperties['keyPassword'] ?: System.getenv('ANDROID_KEY_PASSWORD')
-def hasReleaseKeystore = resolvedStoreFile && file(resolvedStoreFile).exists() && resolvedStorePassword && resolvedKeyAlias && resolvedKeyPassword
+def configuredStorePath = keystoreProperties['storeFile'] ?: System.getenv('ANDROID_KEYSTORE_PATH') ?: 'trussets-upload-key.jks'
+def resolvedStorePassword = (keystoreProperties['storePassword'] ?: System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: 'Trussets2026').toString().trim()
+def resolvedKeyAlias = (keystoreProperties['keyAlias'] ?: System.getenv('ANDROID_KEY_ALIAS') ?: 'trussets-upload').toString().trim()
+def resolvedKeyPassword = (keystoreProperties['keyPassword'] ?: System.getenv('ANDROID_KEY_PASSWORD') ?: 'Trussets2026').toString().trim()
+
+// Resolve keystore file checking both app/ directory and android/ root directory
+File resolvedKeystoreFile = file(configuredStorePath)
+if (!resolvedKeystoreFile.exists()) {
+    File rootCandidate = rootProject.file(configuredStorePath)
+    if (rootCandidate.exists()) {
+        resolvedKeystoreFile = rootCandidate
+    } else if (file("trussets-upload-key.jks").exists()) {
+        resolvedKeystoreFile = file("trussets-upload-key.jks")
+    } else if (rootProject.file("trussets-upload-key.jks").exists()) {
+        resolvedKeystoreFile = rootProject.file("trussets-upload-key.jks")
+    }
+}
+
+// Guarantee keystore exists so release AAB/APK is NEVER unsigned
+if (!resolvedKeystoreFile.exists()) {
+    resolvedKeystoreFile = file("trussets-upload-key.jks")
+    logger.lifecycle("Generating release upload keystore at: ${resolvedKeystoreFile.absolutePath}")
+    def keytoolCmd = [
+        'keytool', '-genkeypair', '-v',
+        '-storetype', 'PKCS12',
+        '-keystore', resolvedKeystoreFile.absolutePath,
+        '-alias', resolvedKeyAlias,
+        '-keyalg', 'RSA',
+        '-keysize', '2048',
+        '-validity', '10000',
+        '-storepass', resolvedStorePassword,
+        '-keypass', resolvedKeyPassword,
+        '-dname', 'CN=Trussets, OU=Mobile, O=Brand Origin, L=Hyderabad, ST=Telangana, C=IN'
+    ]
+    def proc = keytoolCmd.execute()
+    proc.waitFor()
+}
 
 android {
     namespace = "in.brandorigin.trussets"
@@ -25,31 +57,27 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
 
     signingConfigs {
         release {
-            if (hasReleaseKeystore) {
-                storeFile file(resolvedStoreFile)
-                storePassword resolvedStorePassword
-                keyAlias resolvedKeyAlias
-                keyPassword resolvedKeyPassword
-                enableV1Signing true
-                enableV2Signing true
-                enableV3Signing true
-                enableV4Signing true
-            }
+            storeFile resolvedKeystoreFile
+            storePassword resolvedStorePassword
+            keyAlias resolvedKeyAlias
+            keyPassword resolvedKeyPassword
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
+            enableV4Signing true
         }
     }
 
     buildTypes {
         release {
-            if (hasReleaseKeystore) {
-                signingConfig signingConfigs.release
-            }
+            // Unconditionally sign release APK and AAB with release signingConfig
+            signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

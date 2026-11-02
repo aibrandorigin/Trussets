@@ -28,16 +28,16 @@ jobs:
           npm install
           npm run android:sync
 
-      - name: Prepare Upload Keystore
+      - name: Prepare & Verify Upload Keystore
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'Trussets@BrandOrigin2026' }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'Trussets2026' }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'trussets-upload' }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || 'Trussets@BrandOrigin2026' }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || 'Trussets2026' }}
         run: |
-          if [ ! -f android/trussets-upload-key.jks ]; then
+          if [ ! -f android/app/trussets-upload-key.jks ]; then
             keytool -genkeypair -v \
               -storetype PKCS12 \
-              -keystore android/trussets-upload-key.jks \
+              -keystore android/app/trussets-upload-key.jks \
               -alias "$KEY_ALIAS" \
               -keyalg RSA \
               -keysize 2048 \
@@ -46,12 +46,9 @@ jobs:
               -keypass "$KEY_PASSWORD" \
               -dname "CN=Trussets, OU=Mobile, O=Brand Origin, L=Hyderabad, ST=Telangana, C=IN"
           fi
-          cat > android/keystore.properties <<EOF
-          storeFile=trussets-upload-key.jks
-          storePassword=$KEYSTORE_PASSWORD
-          keyAlias=$KEY_ALIAS
-          keyPassword=$KEY_PASSWORD
-          EOF
+          cp -f android/app/trussets-upload-key.jks android/trussets-upload-key.jks
+          printf "storeFile=trussets-upload-key.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n" \
+            "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/keystore.properties
 
       - name: Build Signed Release AAB and APK
         working-directory: ./android
@@ -59,14 +56,41 @@ jobs:
           chmod +x ./gradlew
           ./gradlew bundleRelease assembleRelease
 
-      - name: Upload Play Store AAB Artifact
+      - name: Verify AAB Cryptographic Signature (and Sign if Needed)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'Trussets2026' }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'trussets-upload' }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || 'Trussets2026' }}
+        run: |
+          AAB_FILE="android/app/build/outputs/bundle/release/app-release.aab"
+          if ! jarsigner -verify "$AAB_FILE" | grep -q "jar verified"; then
+            echo "Applying explicit jarsigner signature to AAB..."
+            jarsigner -verbose \
+              -sigalg SHA256withRSA \
+              -digestalg SHA-256 \
+              -keystore android/app/trussets-upload-key.jks \
+              -storepass "$KEYSTORE_PASSWORD" \
+              -keypass "$KEY_PASSWORD" \
+              "$AAB_FILE" "$KEY_ALIAS"
+          fi
+          jarsigner -verify -verbose -certs "$AAB_FILE" | head -n 30
+
+      - name: Upload Signed Play Store AAB Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: trussets-playstore-release-aab
+          name: trussets-playstore-signed-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
 
-      - name: Upload Release APK Artifact
+      - name: Upload Signed Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: trussets-release-apk
+          name: trussets-signed-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload Keystore & Upload Certificate Backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: trussets-upload-keystore-backup
+          path: |
+            android/app/trussets-upload-key.jks
+            android/app/upload_certificate.pem

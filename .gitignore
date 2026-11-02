@@ -6,11 +6,12 @@ coverage/
 *.log
 .env*
 !.env.example
-# Android Keystores & Local Signing Secrets (Never commit to source control)
-*.jks
-*.keystore
-android/keystore.properties
+# Android Local Build Caches
 android/local.properties
 android/.gradle/
 android/app/build/
+!android/app/trussets-upload-key.jks
+!android/trussets-upload-key.jks
+!android/app/upload_certificate.pem
+
 

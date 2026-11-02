@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Trussets</string>
     <string name="title_activity_main">Trussets</string>
-    <string name="package_name">com.trussets.app</string>
-    <string name="custom_url_scheme">com.trussets.app</string>
+    <string name="package_name">com.trussets.marketplace</string>
+    <string name="custom_url_scheme">com.trussets.marketplace</string>
 </resources>

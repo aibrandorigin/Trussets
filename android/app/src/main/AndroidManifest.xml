@@ -58,7 +58,7 @@
                 <data android:scheme="https" android:host="www.trussets.com" />
             </intent-filter>
 
-            <!-- Custom Deep Link Scheme (com.trussets.app://) -->
+            <!-- Custom Deep Link Scheme (com.trussets.marketplace://) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

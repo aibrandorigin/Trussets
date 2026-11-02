@@ -52,15 +52,15 @@ if (!resolvedKeystoreFile.exists()) {
 }
 
 android {
-    namespace = "com.trussets.app"
+    namespace = "com.trussets.marketplace"
     compileSdk = rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "com.trussets.app"
+        applicationId "com.trussets.marketplace"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 1
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

@@ -6,7 +6,7 @@ const PRODUCTION_BACKEND_URL =
   'https://ais-pre-6omlvt4qhajgkvvfwj4akz-416483381564.asia-east1.run.app';
 
 const config: CapacitorConfig = {
-  appId: 'com.trussets.app',
+  appId: 'com.trussets.marketplace',
   appName: 'Trussets',
   webDir: 'dist',
   bundledWebRuntime: false,

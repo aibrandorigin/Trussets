@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "property": {
+      "title": "Property",
+      "description": "A verified property listing on the Trussets platform",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "price": { "type": "number" },
+        "priceFormatted": { "type": "string" },
+        "transactionType": { "type": "string", "enum": ["buy", "rent"] },
+        "category": { "type": "string" },
+        "city": { "type": "string" },
+        "locality": { "type": "string" },
+        "state": { "type": "string" },
+        "pincode": { "type": "string" },
+        "bedrooms": { "type": "number" },
+        "bathrooms": { "type": "number" },
+        "areaSqFt": { "type": "number" },
+        "propertyStatus": { "type": "string", "enum": ["NEW", "OLD"] },
+        "propertyAge": { "type": "number" },
+        "listingStatus": { "type": "string" },
+        "verificationStatus": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "ownerPhone": { "type": "string" },
+        "listedDate": { "type": "string" }
+      },
+      "required": ["id", "title", "price", "transactionType", "city", "locality"]
+    },
+    "user": {
+      "title": "User",
+      "description": "User profile for buyers, sellers, owners, and tenants",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "mobile_normalized": { "type": "string" },
+        "userType": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string" },
+        "verified": { "type": "boolean" },
+        "accountCreated": { "type": "string" }
+      },
+      "required": ["id", "name", "phone", "mobile_normalized"]
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "Platform administrator accounts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "subscription": {
+      "title": "Subscription",
+      "description": "User subscription plan purchases",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "planId": { "type": "string" },
+        "planName": { "type": "string" },
+        "planType": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "userId", "planId", "status"]
+    },
+    "setting": {
+      "title": "Setting",
+      "description": "Platform settings and brand configuration",
+      "type": "object",
+      "properties": {
+        "platformName": { "type": "string" },
+        "supportEmail": { "type": "string" },
+        "supportPhone": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/properties/{propertyId}": {
+      "schema": "property",
+      "description": "Public property marketplace listings"
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User account documents"
+    },
+    "/admins/{adminId}": {
+      "schema": "admin",
+      "description": "Staff administrative governance accounts"
+    },
+    "/subscriptions/{subscriptionId}": {
+      "schema": "subscription",
+      "description": "Purchased user plan subscriptions"
+    },
+    "/settings/{settingId}": {
+      "schema": "setting",
+      "description": "System settings and public branding metadata"
+    }
+  }
+}

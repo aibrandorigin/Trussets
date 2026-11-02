@@ -1,0 +1,10 @@
+{
+  "name": "Remix Trussets - Zero Brokerage Real Estate Marketplace",
+  "description": "Direct owner-to-buyer and owner-to-tenant real estate network across India with verified title deeds, 0% brokerage, and city auto-detection.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

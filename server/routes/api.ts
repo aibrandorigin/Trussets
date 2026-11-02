@@ -4636,9 +4636,9 @@ apiRouter.get('/android/config', (_req, res) => {
     appName: 'Trussets',
     applicationId: 'com.trussets.marketplace',
     developer: 'Brand Origin',
-    versionName: '1.0.0',
-    versionCode: 1,
-    targetSdk: 35,
+    versionName: '1.0.1',
+    versionCode: 2,
+    targetSdk: 36,
     minSdk: 24,
     productionBackendUrl:
       process.env.APP_URL ||

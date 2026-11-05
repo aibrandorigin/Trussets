@@ -2,8 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const PRODUCTION_BACKEND_URL =
   process.env.VITE_API_BASE_URL ||
-  process.env.APP_URL ||
-  'https://ais-pre-6omlvt4qhajgkvvfwj4akz-416483381564.asia-east1.run.app';
+  'https://trussets.com';
 
 const config: CapacitorConfig = {
   appId: 'com.trussets.marketplace',
@@ -13,13 +12,16 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     allowNavigation: [
-      'ais-pre-6omlvt4qhajgkvvfwj4akz-416483381564.asia-east1.run.app',
-      '*.run.app',
       'trussets.com',
       '*.trussets.com',
+      'ais-pre-6omlvt4qhajgkvvfwj4akz-416483381564.asia-east1.run.app',
+      '*.run.app',
     ],
   },
   plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
     SplashScreen: {
       launchShowDuration: 1800,
       launchAutoHide: true,

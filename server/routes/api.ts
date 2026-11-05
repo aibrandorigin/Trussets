@@ -4636,13 +4636,13 @@ apiRouter.get('/android/config', (_req, res) => {
     appName: 'Trussets',
     applicationId: 'com.trussets.marketplace',
     developer: 'Brand Origin',
-    versionName: '1.0.1',
-    versionCode: 2,
+    versionName: '1.0.2',
+    versionCode: 3,
     targetSdk: 36,
     minSdk: 24,
     productionBackendUrl:
       process.env.APP_URL ||
-      'https://ais-pre-6omlvt4qhajgkvvfwj4akz-416483381564.asia-east1.run.app',
+      'https://trussets.com',
     accountDeletionSupported: true,
     deepLinksConfigured: true,
     aabReady: aabExists,

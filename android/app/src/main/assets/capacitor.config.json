@@ -6,13 +6,16 @@
 	"server": {
 		"androidScheme": "https",
 		"allowNavigation": [
-			"ais-pre-6omlvt4qhajgkvvfwj4akz-416483381564.asia-east1.run.app",
-			"*.run.app",
 			"trussets.com",
-			"*.trussets.com"
+			"*.trussets.com",
+			"ais-pre-6omlvt4qhajgkvvfwj4akz-416483381564.asia-east1.run.app",
+			"*.run.app"
 		]
 	},
 	"plugins": {
+		"CapacitorHttp": {
+			"enabled": true
+		},
 		"SplashScreen": {
 			"launchShowDuration": 1800,
 			"launchAutoHide": true,

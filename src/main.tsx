@@ -1,9 +1,9 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
+import { initCapacitorNativeBridge } from './utils/capacitorBridge.ts';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { brandService } from './services/brandService.ts';
-import { initCapacitorNativeBridge } from './utils/capacitorBridge.ts';
 
 // Initialize Capacitor Android/iOS native bridge & production API routing
 initCapacitorNativeBridge();
@@ -16,4 +16,3 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
-

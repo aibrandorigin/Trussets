@@ -123,8 +123,6 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
   const [ownerPhone, setOwnerPhone] = useState(initialProperty?.ownerPhone || user?.phone || '');
 
   // Documents for Sell (un-uploaded by default so user uploads real documents)
-  const [saleDeedUploaded, setSaleDeedUploaded] = useState(false);
-  const [ecUploaded, setEcUploaded] = useState(false);
   const [pattaUploaded, setPattaUploaded] = useState(false);
   const [kycUploaded, setKycUploaded] = useState(false);
 
@@ -384,16 +382,16 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
         floorInfo: transactionType === 'rent' ? floorInfo : undefined,
         furnishing,
         possessionStatus: possession,
-        primaryBadge: transactionType === 'buy' ? '✓ Verified Deed' : '✓ Verified Landlord',
-        badgeType: transactionType === 'buy' ? 'verified-deed' : 'verified-owner',
+        primaryBadge: transactionType === 'buy' ? '✓ Verified Owner' : '✓ Verified Landlord',
+        badgeType: 'verified-owner',
         uploaderType,
         uploaderName: `${ownerName.trim() || user?.name || 'Property Owner'} (${uploaderRelation})`,
         ownerPhone: ownerPhone.trim() || user?.phone || '',
         ownerWhatsapp: (ownerPhone.trim() || user?.phone || '').replace(/[^0-9]/g, ''),
         reraApproved: true,
         municipalApproval: 'Municipal Sanctioned',
-        ecYears: transactionType === 'buy' ? 30 : 0,
-        saleDeedVerified: transactionType === 'buy' ? saleDeedUploaded : ownershipProofUploaded,
+        ecYears: 0,
+        saleDeedVerified: transactionType === 'buy' ? kycUploaded : ownershipProofUploaded,
         mortgageStatus,
         courtLitigations,
         bankLoanSanctions: transactionType === 'buy' ? 'Yes' : 'To be verified',
@@ -410,7 +408,7 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
                 ? '100% genuine owner direct sale with 0% brokerage'
                 : 'Direct owner-to-tenant lease with 0% brokerage & zero middleman fees',
               transactionType === 'buy' 
-                ? 'Title deed & 30-Year EC audited' 
+                ? '100% owner-verified listing with 0% brokerage' 
                 : `Available for: ${preferredTenants} • Handover: ${availableFrom}`
             ],
         images: transactionType === 'buy'
@@ -504,7 +502,7 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-xl mx-auto">
           {transactionType === 'buy'
-            ? 'Upload your Title Deed, EC and clear photos to get verified inquiries from direct buyers. 0% Brokerage.'
+            ? 'Upload your property details and clear photos to get verified inquiries from direct buyers. 0% Brokerage.'
             : 'List your home or commercial space for lease. Verified owner identity, 0% brokerage, and zero middleman fees.'}
         </p>
       </div>
@@ -576,7 +574,7 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
               STEP {currentStep} OF {totalSteps}: {
                 currentStep === 1 ? 'PROPERTY CATEGORY' :
                 currentStep === 2 ? 'SPECIFICATIONS & DETAILS' :
-                currentStep === 3 ? (transactionType === 'buy' ? 'TITLE PROOF & KYC' : 'OWNERSHIP PROOF & KYC') :
+                currentStep === 3 ? (transactionType === 'buy' ? 'OWNER VERIFICATION & KYC' : 'OWNERSHIP PROOF & KYC') :
                 currentStep === 4 ? (transactionType === 'buy' ? 'SELLING PRICE & LOCATION' : 'MONTHLY RENT & DEPOSIT') :
                 currentStep === 5 ? (transactionType === 'buy' ? 'INFRASTRUCTURE & AMENITIES' : 'TENANT AMENITIES & CONVENIENCES') :
                 'REVIEW & VERIFIED BADGE'
@@ -598,7 +596,7 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
               2. {transactionType === 'buy' ? 'Dimensions' : 'Rental Specs'}
             </span>
             <span className={currentStep >= 3 ? 'text-[#881324] font-bold' : ''}>
-              3. {transactionType === 'buy' ? 'Title Deeds' : 'Landlord KYC'}
+              3. {transactionType === 'buy' ? 'Owner KYC' : 'Landlord KYC'}
             </span>
             <span className={currentStep >= 4 ? 'text-[#881324] font-bold' : ''}>
               4. {transactionType === 'buy' ? 'Sale Price' : 'Monthly Rent'}
@@ -980,12 +978,12 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
               </span>
               <h3 className="text-lg font-bold text-slate-900">
                 {transactionType === 'buy'
-                  ? 'Mandatory Title Proofs & Owner KYC Verification'
+                  ? 'Mandatory Owner Verification & KYC'
                   : 'Rental Ownership Proof & Landlord KYC Verification'}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
                 {transactionType === 'buy'
-                  ? 'To guarantee 0% brokerage and verified titles, upload your Sale Deed copy, 30-Year Nil EC, and Aadhaar/PAN.'
+                  ? 'To guarantee 0% brokerage and genuine listings, confirm your ownership status and KYC verification.'
                   : 'To verify legitimate landlord identity and protect tenants from fake listings, verify your ownership via Electricity / Property Tax bill.'}
               </p>
             </div>
@@ -996,7 +994,7 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {transactionType === 'buy' ? (
                   [
-                    { id: 'individual' as UploaderType, title: 'Individual Owner', desc: 'Title deed holder / Spouse' },
+                    { id: 'individual' as UploaderType, title: 'Individual Owner', desc: 'Property owner / Spouse' },
                     { id: 'builder' as UploaderType, title: 'Builder / Developer', desc: 'Managing Director / Authorized Rep' },
                     { id: 'landlord_poa' as UploaderType, title: 'Power of Attorney (POA)', desc: 'Registered GPA / Joint Venture' }
                   ].map((item) => (
@@ -1041,38 +1039,7 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
               /* SELL DOCUMENTS */
               <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  1. Mandatory Title Proofs (For Sale)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <label className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={saleDeedUploaded}
-                      onChange={(e) => setSaleDeedUploaded(e.target.checked)}
-                      className="accent-[#881324] w-4 h-4"
-                    />
-                    <div>
-                      <span className="font-semibold block text-slate-800">Registered Sale Deed / Title Deed</span>
-                      <span className="text-[10px] text-slate-400">PDF or Scanned Copy Attached</span>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={ecUploaded}
-                      onChange={(e) => setEcUploaded(e.target.checked)}
-                      className="accent-[#881324] w-4 h-4"
-                    />
-                    <div>
-                      <span className="font-semibold block text-slate-800">30-Year Encumbrance Certificate (EC - Nil)</span>
-                      <span className="text-[10px] text-slate-400">Issued by Registration & Stamps Dept</span>
-                    </div>
-                  </label>
-                </div>
-
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pt-2">
-                  2. Government KYC Audit
+                  Owner KYC &amp; Property Verification
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <label className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
@@ -1467,7 +1434,7 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
               </h3>
               <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
                 {transactionType === 'buy'
-                  ? 'Your listing will be published directly to buyers with the official Trussets Verified Deed Badge.'
+                  ? 'Your listing will be published directly to buyers with the official Trussets Verified Owner Badge.'
                   : 'Your rental will be published directly to tenants with 0% brokerage and zero middleman fees.'}
               </p>
             </div>
@@ -1526,10 +1493,10 @@ export const PostPropertyWizard: React.FC<PostPropertyWizardProps> = ({
                 </div>
                 <div className="p-2.5 bg-white rounded-lg border border-slate-200">
                   <span className="text-slate-400 block text-[10px]">
-                    {transactionType === 'buy' ? 'Title Proof' : 'Landlord Proof'}
+                    {transactionType === 'buy' ? 'Owner Verification' : 'Landlord Proof'}
                   </span>
                   <span className="font-bold text-emerald-700">
-                    {transactionType === 'buy' ? 'Sale Deed Clear' : 'Ownership Verified'}
+                    {transactionType === 'buy' ? 'KYC & Owner Verified' : 'Ownership Verified'}
                   </span>
                 </div>
                 <div className="p-2.5 bg-white rounded-lg border border-slate-200">

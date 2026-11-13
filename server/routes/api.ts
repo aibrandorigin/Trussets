@@ -252,6 +252,24 @@ export function isPlanActive(sub: { expiresAt: string; status: string; startsAt?
   return now >= start && now <= expiry;
 }
 
+function sanitizeKycDocuments(docs?: any[], userId?: string) {
+  if (!Array.isArray(docs)) return [];
+  return docs.map((d: any) => ({
+    id: d.id,
+    docType: d.docType,
+    documentNumber: d.documentNumber || '',
+    fileName: d.fileName,
+    mimeType: d.mimeType,
+    fileSize: d.fileSize,
+    fileUrl: d.fileUrl || (userId && d.id ? `/api/kyc-file/${encodeURIComponent(userId)}/${encodeURIComponent(d.id)}` : ''),
+    status: d.status || 'Pending',
+    rejectionReason: d.rejectionReason || '',
+    uploadedAt: d.uploadedAt,
+    reviewedAt: d.reviewedAt,
+    reviewedBy: d.reviewedBy,
+  }));
+}
+
 export function getUserWithSubscriptions(userId: string) {
   const db = getDb();
   let user: any = db.users.find((u: any) => u.id === userId);
@@ -282,6 +300,8 @@ export function getUserWithSubscriptions(userId: string) {
           staffRole: admin.role,
           staffRoleTitle: admin.roleTitle || 'Super Administrator',
           staffAdminId: admin.id,
+          kycStatus: (admin as any).kycStatus || 'Verified',
+          kycDocuments: sanitizeKycDocuments((admin as any).kycDocuments, admin.id),
         },
         subscriptions: [],
         activeSubscription: null,
@@ -339,16 +359,21 @@ export function getUserWithSubscriptions(userId: string) {
     saveDb(db);
   }
 
+  const sanitizedKyc = sanitizeKycDocuments(user.kycDocuments, user.id);
   const enrichedUser = matchingAdmin
     ? {
         ...user,
+        kycDocuments: sanitizedKyc,
         isAdmin: true,
         isStaff: true,
         staffRole: matchingAdmin.role,
         staffRoleTitle: matchingAdmin.roleTitle || user.staffRoleTitle || 'Platform Staff',
         staffAdminId: matchingAdmin.id,
       }
-    : user;
+    : {
+        ...user,
+        kycDocuments: sanitizedKyc,
+      };
 
   return {
     user: enrichedUser,
@@ -1762,6 +1787,210 @@ apiRouter.put('/user/profile', (req, res) => {
   });
 });
 
+// 8.1 User KYC Document Upload, Listing, Serving & Deletion
+apiRouter.get('/user/kyc-documents', (req, res) => {
+  const requester = getRequester(req);
+  const targetUserId = (req.query.userId as string) || requester.userId;
+  if (!targetUserId) {
+    res.status(400).json({ error: 'userId is required' });
+    return;
+  }
+  const db = getDb();
+  const user: any = db.users.find((u) => u.id === targetUserId) || db.admins.find((a) => a.id === targetUserId);
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+  res.json({
+    kycStatus: user.kycStatus || (user.verified ? 'Verified' : 'Not Submitted'),
+    kycRejectionReason: user.kycRejectionReason || '',
+    documents: sanitizeKycDocuments(user.kycDocuments, user.id),
+  });
+});
+
+apiRouter.post('/user/kyc-documents', (req, res) => {
+  try {
+    const { userId, docType, documentNumber, fileName, mimeType, base64Data } = req.body;
+    if (!userId || !docType || !base64Data) {
+      res.status(400).json({ error: 'userId, docType, and document file are required.' });
+      return;
+    }
+
+    const db = getDb();
+    const user: any = db.users.find((u) => u.id === userId) || db.admins.find((a) => a.id === userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found.' });
+      return;
+    }
+
+    let resolvedMime = mimeType || 'application/octet-stream';
+    let cleanBase64 = String(base64Data);
+    if (cleanBase64.includes(';base64,')) {
+      const parts = cleanBase64.split(';base64,');
+      const header = parts[0];
+      cleanBase64 = parts[1];
+      if (header.startsWith('data:')) {
+        resolvedMime = header.slice(5);
+      }
+    }
+
+    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowedMimes.includes(resolvedMime.toLowerCase())) {
+      res.status(400).json({ error: 'Only JPG, PNG, WebP images or PDF documents are supported for KYC.' });
+      return;
+    }
+
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    if (buffer.length === 0) {
+      res.status(400).json({ error: 'Uploaded file appears to be empty.' });
+      return;
+    }
+    if (buffer.length > 10 * 1024 * 1024) {
+      res.status(400).json({ error: 'KYC document exceeds the 10MB maximum file size.' });
+      return;
+    }
+
+    let ext = 'bin';
+    if (resolvedMime.includes('pdf')) ext = 'pdf';
+    else if (resolvedMime.includes('png')) ext = 'png';
+    else if (resolvedMime.includes('webp')) ext = 'webp';
+    else if (resolvedMime.includes('jpeg') || resolvedMime.includes('jpg')) ext = 'jpg';
+
+    const docId = `kyc-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const kycDir = path.join(process.cwd(), 'public', 'uploads', 'kyc');
+    if (!fs.existsSync(kycDir)) {
+      fs.mkdirSync(kycDir, { recursive: true });
+    }
+    const diskFileName = `${userId}_${docId}.${ext}`;
+    try {
+      fs.writeFileSync(path.join(kycDir, diskFileName), buffer);
+    } catch (diskErr) {
+      console.warn('Could not write KYC file to local disk (Cloud SQL dataUrl fallback active):', diskErr);
+    }
+
+    const dataUrl = `data:${resolvedMime};base64,${cleanBase64}`;
+    const docRecord = {
+      id: docId,
+      docType: String(docType).trim(),
+      documentNumber: documentNumber ? String(documentNumber).trim() : '',
+      fileName: fileName ? String(fileName).trim() : `${docId}.${ext}`,
+      mimeType: resolvedMime,
+      fileSize: buffer.length,
+      fileUrl: `/api/kyc-file/${encodeURIComponent(userId)}/${encodeURIComponent(docId)}`,
+      dataUrl,
+      status: 'Pending' as const,
+      rejectionReason: '',
+      uploadedAt: new Date().toISOString(),
+    };
+
+    if (!Array.isArray(user.kycDocuments)) {
+      user.kycDocuments = [];
+    }
+    user.kycDocuments.unshift(docRecord);
+    user.kycStatus = 'Pending Review';
+    user.kycRejectionReason = '';
+    user.updated_at = new Date().toISOString();
+    user.version = (user.version || 1) + 1;
+
+    if (!Array.isArray(db.notifications)) {
+      db.notifications = [];
+    }
+    db.notifications.unshift({
+      id: `notif-kyc-${Date.now()}`,
+      type: 'user',
+      title: 'New KYC Document Uploaded',
+      description: `${user.name || user.phone} uploaded ${docRecord.docType} (${docRecord.fileName}) for verification.`,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+      linkModule: 'users',
+    });
+
+    saveDb(db);
+
+    const userWithSubs = getUserWithSubscriptions(user.id);
+    res.json({
+      success: true,
+      message: `${docRecord.docType} uploaded successfully and queued for admin verification.`,
+      document: sanitizeKycDocuments([docRecord], user.id)[0],
+      documents: sanitizeKycDocuments(user.kycDocuments, user.id),
+      kycStatus: user.kycStatus,
+      user: userWithSubs?.user || user,
+    });
+  } catch (err: any) {
+    console.error('KYC document upload failed:', err);
+    res.status(500).json({ error: err.message || 'Failed to upload KYC document.' });
+  }
+});
+
+apiRouter.delete('/user/kyc-documents/:docId', (req, res) => {
+  const userId = (req.query.userId as string) || req.body?.userId || (req.headers['x-user-id'] as string);
+  const { docId } = req.params;
+  if (!userId || !docId) {
+    res.status(400).json({ error: 'userId and docId are required.' });
+    return;
+  }
+
+  const db = getDb();
+  const user: any = db.users.find((u) => u.id === userId) || db.admins.find((a) => a.id === userId);
+  if (!user) {
+    res.status(404).json({ error: 'User not found.' });
+    return;
+  }
+
+  const prevLen = Array.isArray(user.kycDocuments) ? user.kycDocuments.length : 0;
+  user.kycDocuments = (user.kycDocuments || []).filter((d: any) => d.id !== docId);
+  if (user.kycDocuments.length === prevLen) {
+    res.status(404).json({ error: 'Document not found.' });
+    return;
+  }
+
+  if (user.kycDocuments.length === 0) {
+    user.kycStatus = user.verified ? 'Verified' : 'Not Submitted';
+  } else if (user.kycDocuments.some((d: any) => d.status === 'Verified')) {
+    user.kycStatus = 'Verified';
+  } else if (user.kycDocuments.some((d: any) => d.status === 'Pending')) {
+    user.kycStatus = 'Pending Review';
+  } else {
+    user.kycStatus = 'Rejected';
+  }
+
+  saveDb(db);
+  res.json({
+    success: true,
+    documents: sanitizeKycDocuments(user.kycDocuments, user.id),
+    kycStatus: user.kycStatus,
+  });
+});
+
+apiRouter.get('/kyc-file/:userId/:docId', (req, res) => {
+  const { userId, docId } = req.params;
+  const db = getDb();
+  const user: any = db.users.find((u) => u.id === userId) || db.admins.find((a) => a.id === userId);
+  if (!user || !Array.isArray(user.kycDocuments)) {
+    res.status(404).json({ error: 'Document not found.' });
+    return;
+  }
+
+  const doc = user.kycDocuments.find((d: any) => d.id === docId);
+  if (!doc) {
+    res.status(404).json({ error: 'Document not found.' });
+    return;
+  }
+
+  if (doc.dataUrl && doc.dataUrl.includes(';base64,')) {
+    const [header, b64] = doc.dataUrl.split(';base64,');
+    const mime = header.replace('data:', '') || doc.mimeType || 'application/octet-stream';
+    const buf = Buffer.from(b64, 'base64');
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.fileName || 'kyc-document')}"`);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.send(buf);
+    return;
+  }
+
+  res.status(404).json({ error: 'Document binary data unavailable.' });
+});
+
 // 9. Server-Authoritative Wishlist Sync (Requirement 19)
 apiRouter.get('/user/wishlist', (req, res) => {
   const userId = (req.query.userId as string) || (req.headers['x-user-id'] as string);
@@ -1944,7 +2173,10 @@ apiRouter.post('/admin/test-login', (req, res) => {
     admin = db.admins.find(a => a.email.toLowerCase() === email.trim().toLowerCase());
   }
   if (!admin) {
-    admin = db.admins.find(a => a.email.toLowerCase() === 'trussets@gmail.com') || db.admins[0];
+    admin =
+      db.admins.find(a => a.isOriginalSuperAdmin) ||
+      db.admins.find(a => a.role === 'super_admin') ||
+      db.admins[0];
   }
 
   if (!admin) {
@@ -1984,23 +2216,31 @@ apiRouter.post('/admin/test-login', (req, res) => {
   });
 });
 
-// List Available Test Admin Credentials
+// List Available Test Admin Credentials (Reflects Live Authoritative Admin Record)
 apiRouter.get('/admin/test-accounts', (req, res) => {
+  const db = getDb();
+  const superAdmin =
+    db.admins.find((a) => a.isOriginalSuperAdmin) ||
+    db.admins.find((a) => a.role === 'super_admin') ||
+    db.admins[0];
+
   res.json({
-    accounts: [
-      {
-        id: 'admin-super',
-        name: 'TrustSets Super Administrator',
-        email: 'trussets@gmail.com',
-        password: '111111',
-        role: 'Super Administrator',
-        phone: '+91 9652663763',
-        description: 'Full unconstrained marketplace governance, properties verification, plans, and audit logs.',
-        badge: 'Recommended'
-      }
-    ],
+    accounts: superAdmin
+      ? [
+          {
+            id: superAdmin.id,
+            name: superAdmin.name,
+            email: superAdmin.email,
+            password: '••••••',
+            role: superAdmin.roleTitle || 'Super Administrator',
+            phone: superAdmin.phone || '+91 9652663763',
+            description: 'Authoritative Super Administrator account synced with Cloud SQL.',
+            badge: 'Live Super Admin',
+          },
+        ]
+      : [],
     serverTime: new Date().toISOString(),
-    status: 'Ready'
+    status: 'Ready',
   });
 });
 
@@ -2535,6 +2775,7 @@ apiRouter.get('/admin/users', requireAdminAuth, (req: AdminRequest, res) => {
     );
     return {
       ...u,
+      kycDocuments: sanitizeKycDocuments((u as any).kycDocuments, u.id),
       isStaff: !!adminStaff,
       staffRole: adminStaff?.role,
       staffRoleTitle: adminStaff?.roleTitle,
@@ -2569,6 +2810,7 @@ apiRouter.get('/admin/users/:id', requireAdminAuth, (req: AdminRequest, res) => 
 
   const enrichedUser = {
     ...user,
+    kycDocuments: sanitizeKycDocuments((user as any).kycDocuments, user.id),
     isStaff: !!adminStaff,
     staffRole: adminStaff?.role,
     staffRoleTitle: adminStaff?.roleTitle,
@@ -2584,6 +2826,82 @@ apiRouter.get('/admin/users/:id', requireAdminAuth, (req: AdminRequest, res) => 
   res.json({
     user: enrichedUser,
     properties: userProperties,
+  });
+});
+
+// Admin Review of User KYC Documents
+apiRouter.put('/admin/users/:id/kyc-status', requireAdminAuth, (req: AdminRequest, res) => {
+  const db = getDb();
+  const user: any = db.users.find((u) => u.id === req.params.id);
+  if (!user) {
+    res.status(404).json({ error: 'User not found.' });
+    return;
+  }
+
+  const { docId, status, rejectionReason } = req.body;
+  if (!status || !['Verified', 'Rejected', 'Pending'].includes(status)) {
+    res.status(400).json({ error: 'status must be Verified, Rejected, or Pending.' });
+    return;
+  }
+
+  const reviewer = req.admin?.email || 'Admin';
+  const nowIso = new Date().toISOString();
+
+  if (!Array.isArray(user.kycDocuments)) {
+    user.kycDocuments = [];
+  }
+
+  if (docId) {
+    const doc = user.kycDocuments.find((d: any) => d.id === docId);
+    if (!doc) {
+      res.status(404).json({ error: 'KYC document not found.' });
+      return;
+    }
+    doc.status = status;
+    doc.rejectionReason = status === 'Rejected' ? (rejectionReason || 'Document did not pass verification.') : '';
+    doc.reviewedAt = nowIso;
+    doc.reviewedBy = reviewer;
+  } else {
+    user.kycDocuments.forEach((doc: any) => {
+      doc.status = status;
+      doc.rejectionReason = status === 'Rejected' ? (rejectionReason || 'Document did not pass verification.') : '';
+      doc.reviewedAt = nowIso;
+      doc.reviewedBy = reviewer;
+    });
+  }
+
+  if (user.kycDocuments.some((d: any) => d.status === 'Verified')) {
+    user.kycStatus = 'Verified';
+    user.verified = true;
+    user.kycRejectionReason = '';
+  } else if (user.kycDocuments.some((d: any) => d.status === 'Pending')) {
+    user.kycStatus = 'Pending Review';
+  } else if (user.kycDocuments.some((d: any) => d.status === 'Rejected')) {
+    user.kycStatus = 'Rejected';
+    user.verified = false;
+    user.kycRejectionReason = rejectionReason || 'Submitted KYC documents were rejected.';
+  } else {
+    user.kycStatus = status === 'Verified' ? 'Verified' : status === 'Rejected' ? 'Rejected' : 'Not Submitted';
+    user.verified = status === 'Verified';
+  }
+
+  user.updated_at = nowIso;
+  saveDb(db);
+
+  logAdminAction(
+    reviewer,
+    `KYC ${status}${docId ? ` (Doc ${docId})` : ''} for ${user.name || user.phone}`,
+    'Users KYC',
+    user.email || user.phone,
+    req.ip
+  );
+
+  res.json({
+    success: true,
+    user: {
+      ...user,
+      kycDocuments: sanitizeKycDocuments(user.kycDocuments, user.id),
+    },
   });
 });
 
@@ -2745,10 +3063,10 @@ export const ROLE_TEMPLATES = [
   },
   {
     id: 'deed_auditor',
-    name: 'Deed Verification Specialist',
+    name: 'Verification Specialist',
     department: 'Legal & Compliance',
     badgeColor: 'emerald',
-    description: 'Reviews and validates legal title deeds, documents, and approves or rejects deed certifications with audit notes.',
+    description: 'Reviews and validates owner KYC, property documents, and approves or rejects listing verifications with audit notes.',
     defaultPermissions: ['verify_deeds', 'view_properties', 'triage_fraud', 'view_audit_logs'],
   },
   {
@@ -2866,11 +3184,28 @@ apiRouter.put('/admin/staff/:id', requireAdminAuth, (req: AdminRequest, res) => 
     return;
   }
 
-  const { role, roleTitle, department, permissions, status } = req.body;
+  const { name, email, phone, role, roleTitle, department, permissions, status } = req.body;
 
   if (staff.isOriginalSuperAdmin && status && status !== 'Active') {
     res.status(400).json({ error: 'The primary Super Administrator cannot be deactivated.' });
     return;
+  }
+
+  const prevEmail = staff.email?.toLowerCase();
+
+  if (name !== undefined && String(name).trim()) staff.name = String(name).trim();
+  if (email !== undefined && String(email).trim()) {
+    const nextEmail = String(email).trim().toLowerCase();
+    const emailTaken = db.admins.some(a => a.id !== staff.id && a.email.toLowerCase() === nextEmail);
+    if (emailTaken) {
+      res.status(400).json({ error: 'Another admin account already uses this email address.' });
+      return;
+    }
+    staff.email = nextEmail;
+  }
+  if (phone !== undefined) {
+    const norm = phone ? normalizeMobile(String(phone)) : null;
+    staff.phone = norm ? norm.display : String(phone).trim();
   }
 
   if (role) {
@@ -2883,20 +3218,30 @@ apiRouter.put('/admin/staff/:id', requireAdminAuth, (req: AdminRequest, res) => 
   if (permissions) staff.permissions = permissions;
   if (status) staff.status = status;
 
-  // Sync back to promoted user if applicable
-  if (staff.promotedFromUserId) {
-    const user = db.users.find(u => u.id === staff.promotedFromUserId);
-    if (user) {
-      user.staffRole = staff.role;
-      user.staffRoleTitle = staff.roleTitle;
+  // Sync back to linked/promoted user if applicable
+  const linkedUser = db.users.find(
+    u =>
+      u.id === staff.promotedFromUserId ||
+      u.staffAdminId === staff.id ||
+      (prevEmail && u.email?.toLowerCase() === prevEmail)
+  );
+  if (linkedUser) {
+    linkedUser.name = staff.name;
+    linkedUser.email = staff.email;
+    if (staff.phone) {
+      const norm = normalizeMobile(staff.phone);
+      linkedUser.phone = staff.phone;
+      if (norm) linkedUser.mobile_normalized = norm.normalized;
     }
+    linkedUser.staffRole = staff.role;
+    linkedUser.staffRoleTitle = staff.roleTitle;
   }
 
   saveDb(db);
 
   logAdminAction(
     req.admin?.email || 'Admin',
-    `Updated Staff Role/Status for ${staff.name} to ${staff.roleTitle} (${staff.status})`,
+    `Updated Staff Details/Role for ${staff.name} (${staff.email})`,
     'Staff Management',
     staff.email,
     req.ip
@@ -3269,13 +3614,13 @@ apiRouter.put('/admin/properties/:id/verify', requireAdminAuth, (req: AdminReque
   const isVerified = req.body.verified !== undefined ? req.body.verified : true;
   prop.verificationStatus = isVerified ? 'Verified' : 'Rejected';
   prop.saleDeedVerified = isVerified;
-  prop.primaryBadge = isVerified ? '✓ Verified Deed' : 'Under Verification';
+  prop.primaryBadge = isVerified ? '✓ Verified Owner' : 'Under Verification';
   prop.updatedDate = new Date().toISOString().substring(0, 10);
   saveDb(db);
 
   logAdminAction(
     req.admin?.email || 'Admin',
-    isVerified ? 'Verified Property Title Deed' : 'Rejected Property Verification',
+    isVerified ? 'Verified Property Listing' : 'Rejected Property Verification',
     'Properties',
     prop.title || prop.id,
     req.ip
@@ -4512,6 +4857,85 @@ apiRouter.put('/admin/settings', requireAdminAuth, (req: AdminRequest, res) => {
   res.json({ settings: db.settings });
 });
 
+apiRouter.put('/admin/profile', requireAdminAuth, (req: AdminRequest, res) => {
+  const { name, email, phone, department, roleTitle } = req.body;
+  const db = getDb();
+  const admin = db.admins.find(
+    a => a.id === req.admin?.adminId || a.email.toLowerCase() === req.admin?.email.toLowerCase()
+  );
+  if (!admin) {
+    res.status(404).json({ error: 'Admin account not found.' });
+    return;
+  }
+
+  const prevEmail = admin.email.toLowerCase();
+  if (name !== undefined && String(name).trim()) {
+    admin.name = String(name).trim();
+  }
+  if (email !== undefined && String(email).trim()) {
+    const cleanEmail = String(email).trim().toLowerCase();
+    const duplicate = db.admins.find(a => a.id !== admin.id && a.email.toLowerCase() === cleanEmail);
+    if (duplicate) {
+      res.status(400).json({ error: 'Another admin account already uses this email address.' });
+      return;
+    }
+    admin.email = cleanEmail;
+  }
+  if (phone !== undefined) {
+    const cleanPhone = String(phone).trim();
+    if (cleanPhone) {
+      const norm = normalizeMobile(cleanPhone);
+      admin.phone = norm ? norm.display : cleanPhone;
+    } else {
+      admin.phone = '';
+    }
+  }
+  if (department !== undefined && String(department).trim()) {
+    admin.department = String(department).trim();
+  }
+  if (roleTitle !== undefined && String(roleTitle).trim()) {
+    admin.roleTitle = String(roleTitle).trim();
+  }
+
+  // Sync changes to linked user account if one exists
+  const linkedUser = db.users.find(
+    u =>
+      u.staffAdminId === admin.id ||
+      u.id === admin.promotedFromUserId ||
+      (prevEmail && u.email?.toLowerCase() === prevEmail)
+  );
+  if (linkedUser) {
+    linkedUser.name = admin.name;
+    linkedUser.email = admin.email;
+    if (admin.phone) {
+      const norm = normalizeMobile(admin.phone);
+      linkedUser.phone = admin.phone;
+      if (norm) linkedUser.mobile_normalized = norm.normalized;
+    }
+    linkedUser.updated_at = new Date().toISOString();
+    linkedUser.version = (linkedUser.version || 1) + 1;
+  }
+
+  saveDb(db);
+
+  const refreshedToken = createSessionToken(admin.id, admin.email);
+  logAdminAction(
+    admin.email,
+    'Updated Admin Profile Details',
+    'Settings',
+    `${admin.name} (${admin.email})`,
+    req.ip
+  );
+
+  const { passwordHash: _, salt: __, ...sanitized } = admin;
+  res.json({
+    success: true,
+    message: 'Admin profile updated and synced successfully.',
+    token: refreshedToken,
+    admin: sanitized,
+  });
+});
+
 apiRouter.put('/admin/change-password', requireAdminAuth, (req: AdminRequest, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
@@ -4601,8 +5025,8 @@ apiRouter.post('/user/delete-account', (req, res) => {
   );
 
   // Remove user's active subscriptions
-  if (Array.isArray(db.userSubscriptions)) {
-    db.userSubscriptions = db.userSubscriptions.filter((s) => s.userId !== deletedUserId);
+  if (Array.isArray(db.subscriptions)) {
+    db.subscriptions = db.subscriptions.filter((s) => s.userId !== deletedUserId);
   }
 
   // Remove user record from production database
@@ -4636,8 +5060,8 @@ apiRouter.get('/android/config', (_req, res) => {
     appName: 'Trussets',
     applicationId: 'com.trussets.marketplace',
     developer: 'Brand Origin',
-    versionName: '1.0.2',
-    versionCode: 3,
+    versionName: '1.0.4',
+    versionCode: 5,
     targetSdk: 36,
     minSdk: 24,
     productionBackendUrl:

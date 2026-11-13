@@ -2,64 +2,25 @@
   "admins": [
     {
       "id": "admin-trussets-1",
-      "lastLogin": "2026-10-22T04:41:22.971Z",
+      "lastLogin": "2026-11-13T10:20:31.193Z",
       "passwordHash": "ffeed5ad9d685c8f6009efb9a149738256be79f6177a6f5e5bd68a97de20dde95025ff19e3332a62f98e3f8ea23fbd1046db49eb36b8e557c906d9fb38ab3c9f",
       "createdAt": "2026-01-01T00:00:00.000Z",
       "role": "super_admin",
       "isOriginalSuperAdmin": true,
       "status": "Active",
       "salt": "8c6d4282081c50416d10a406ccfe6ff8",
-      "email": "trussets@gmail.com",
+      "email": "k.e.ajayvarma@gmail.com",
       "roleTitle": "Super Administrator",
       "department": "Platform Governance",
-      "name": "TrustSets Super Administrator",
+      "name": "K E Ajaya Varma",
       "permissions": [
         "*"
       ],
-      "phone": "9652663763"
-    },
-    {
-      "id": "staff-ops-1",
-      "email": "ops.manager@trussets.com",
-      "phone": "+91 9845012345",
-      "name": "Priya Sharma",
-      "role": "operations_admin",
-      "roleTitle": "Operations Manager",
-      "department": "Operations",
-      "status": "Active",
-      "permissions": [
-        "manage_properties",
-        "manage_users",
-        "manage_plans",
-        "view_analytics",
-        "manage_banners"
-      ],
-      "assignedBy": "TrustSets Super Administrator",
-      "passwordHash": "7ba71d8c7854f0ba10d6d41723db6712b1dad85959e8be6f3ea842cba4ceed71fb3b3d3a6f43aa8b0d4851e16f764154160e541bbe0ec5a153700109e001c49e",
-      "salt": "db2636737013b1ca7acdc16e3d3fdc70",
-      "createdAt": "2026-02-15T10:00:00.000Z",
-      "lastLogin": "2026-09-17T14:30:00.000Z"
-    },
-    {
-      "id": "staff-deed-1",
-      "email": "deeds.audit@trussets.com",
-      "phone": "+91 9912345678",
-      "name": "Kavitha Reddy",
-      "role": "deed_auditor",
-      "roleTitle": "Deed Verification Specialist",
-      "department": "Legal & Title Compliance",
-      "status": "Active",
-      "permissions": [
-        "verify_deeds",
-        "view_properties",
-        "triage_fraud",
-        "view_audit_logs"
-      ],
-      "assignedBy": "TrustSets Super Administrator",
-      "passwordHash": "d789a435f4a0692eda06b278f24f725b4767f47033cd352f27d40670e982ac2426b30f6c610d4012229b63187e82c8dd8d14338e95edfd8563ceb7202a3d008f",
-      "salt": "8a834ee527359849b769cf1665b7c755",
-      "createdAt": "2026-03-01T09:00:00.000Z",
-      "lastLogin": "2026-09-18T08:15:00.000Z"
+      "phone": "+91 93923 81188",
+      "city": "Hyderabad",
+      "location": "Hyderabad",
+      "state": "Telangana",
+      "userType": "Property Owners"
     }
   ],
   "users": [
@@ -139,7 +100,7 @@
         }
       ],
       "salt": "73bf36eda1b0b3af42d01551bb8594b9",
-      "updated_at": "2026-09-30T12:58:15.571Z",
+      "updated_at": "2026-11-13T09:59:54.655Z",
       "name": "Anand Mohan",
       "mobile_verified": true,
       "accountCreated": "2026-09-30",
@@ -148,7 +109,7 @@
       "status": "Active",
       "city": "Visakhapatnam",
       "payments": [],
-      "version": 1,
+      "version": 2,
       "id": "usr-1790773095550",
       "state": "Telangana",
       "verified": true,
@@ -160,7 +121,10 @@
       "location": "Visakhapatnam",
       "passwordHash": "0f713ad5cfd0efc10289894764ec58d7e31be749b0b9f5f55441deea1779212c214e9d9420f28bb9d3f4059d1141ad8908c75b7ecf73f67afe26af77eb2510f3",
       "lastLogin": "2026-09-30",
-      "contactedPropertyIds": []
+      "contactedPropertyIds": [],
+      "kycDocuments": [],
+      "kycStatus": "Verified",
+      "kycRejectionReason": ""
     },
     {
       "updated_at": "2026-09-30T13:48:25.231Z",
@@ -1972,6 +1936,15 @@
   ],
   "notifications": [
     {
+      "id": "notif-kyc-1794563994655",
+      "type": "user",
+      "title": "New KYC Document Uploaded",
+      "description": "Anand Mohan uploaded PAN Card (test-pan.png) for verification.",
+      "timestamp": "2026-11-13T09:59:54.655Z",
+      "isRead": false,
+      "linkModule": "users"
+    },
+    {
       "id": "notif-1",
       "type": "user",
       "title": "New User Registration",
@@ -2009,6 +1982,60 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1794565231198-631",
+      "admin": "TrustSets Super Administrator",
+      "action": "Admin Logged In via Main Modal",
+      "module": "Authentication",
+      "recordAffected": "trussets@gmail.com",
+      "timestamp": "2026-11-13 10:20:31",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log-1794564039124-540",
+      "admin": "TrustSets Super Administrator",
+      "action": "Admin Quick Test Login Executed",
+      "module": "Authentication",
+      "recordAffected": "trussets@gmail.com",
+      "timestamp": "2026-11-13 10:00:39",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log-1794564014715-51",
+      "admin": "trussets@gmail.com",
+      "action": "Removed Staff Account: Kavitha Reddy (deeds.audit@trussets.com)",
+      "module": "Staff Management",
+      "recordAffected": "deeds.audit@trussets.com",
+      "timestamp": "2026-11-13 10:00:14",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log-1794564014703-220",
+      "admin": "trussets@gmail.com",
+      "action": "Removed Staff Account: Priya Sharma (ops.manager@trussets.com)",
+      "module": "Staff Management",
+      "recordAffected": "ops.manager@trussets.com",
+      "timestamp": "2026-11-13 10:00:14",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log-1794564014684-959",
+      "admin": "TrustSets Super Administrator",
+      "action": "Admin Quick Test Login Executed",
+      "module": "Authentication",
+      "recordAffected": "trussets@gmail.com",
+      "timestamp": "2026-11-13 10:00:14",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log-1794563994634-882",
+      "admin": "TrustSets Super Administrator",
+      "action": "Admin Quick Test Login Executed",
+      "module": "Authentication",
+      "recordAffected": "trussets@gmail.com",
+      "timestamp": "2026-11-13 09:59:54",
+      "ip": "127.0.0.1"
+    },
     {
       "id": "log-1792645504581-336",
       "admin": "trussets@gmail.com",
@@ -2250,12 +2277,8 @@
       "module": "Users",
       "recordAffected": "usr-1790773095550@trussets.in",
       "timestamp": "2026-09-30 12:58:15",
-      "ip": {
-        "id": "usr-1790773095550",
-        "name": "Anand Mohan",
-        "phone": "+91 97033 11223",
-        "mobile_normalized": "919703311223"
-      }
+      "ip": "127.0.0.1",
+      "newValue": "{\"id\":\"usr-1790773095550\",\"name\":\"Anand Mohan\",\"phone\":\"+91 97033 11223\",\"mobile_normalized\":\"919703311223\"}"
     },
     {
       "id": "log-1790773079027-903",
@@ -2727,13 +2750,14 @@
       "otpHash": "7ce22e7ab9a64137532676ec835b90d861271939429251a5d1f9f43f98d797da",
       "salt": "113aa025ae57891ddcd814d4758249d4",
       "purpose": "login",
-      "attempts": 2,
+      "attempts": 3,
       "maxAttempts": 5,
-      "verified": false,
-      "consumed": false,
+      "verified": true,
+      "consumed": true,
       "createdAt": "2026-10-22T07:24:46.269Z",
       "expiresAt": "2026-10-22T07:29:46.269Z",
-      "ip": "127.0.0.1"
+      "ip": "127.0.0.1",
+      "verifiedAt": "2026-10-22T07:24:46.433Z"
     }
   ]
 }

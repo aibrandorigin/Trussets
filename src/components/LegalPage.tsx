@@ -294,7 +294,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({
                         <li>Owners must provide accurate property details and genuine documents.</li>
                         <li>To eliminate duplications and fraudulent postings, only the property owner, their parents, spouse, or their children are authorized to list the properties for sale or rent.</li>
                         <li>Owners must agree that once a buyer purchases the Owner’s Access, their contact details and property-related documents will be shared.</li>
-                        <li>Buyers should conduct their own due diligence (physical inspection, SRO/RTO checks, title &amp; link document verification, encumbrance/hypothecation status, litigation history, etc.) before making the payments for sale.</li>
+                        <li>Buyers should conduct their own due diligence (physical inspection, SRO/RTO checks, property document verification, litigation history, etc.) before making payments for purchase.</li>
                         <li>Both parties should use the platform for genuine and lawful purposes only.</li>
                         <li>Buyers and sellers are advised to act with caution and complete knowledge at every stage of the process.</li>
                         <li>
@@ -444,7 +444,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({
                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
                       <h3 className="font-extrabold text-slate-900 text-sm">Buyers</h3>
                       <ul className="list-disc pl-5 space-y-1 text-xs sm:text-sm text-slate-600">
-                        <li>Independently verify property details (title deeds, EC, municipal approvals, litigation history, and encumbrances/hypothecation).</li>
+                        <li>Independently verify property details (ownership documents, municipal approvals, and litigation history).</li>
                         <li>Exercise caution and seek technical, legal, or financial advice before making payments.</li>
                         <li>Bear the full responsibility for inspection, document checks, and transaction safety.</li>
                         <li>Report non-responsive owners within 48 hours.</li>
@@ -537,7 +537,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({
                   </h2>
                   <ul className="list-disc pl-6 space-y-2 text-slate-700 text-xs sm:text-sm">
                     <li>
-                      Genuine property-related documents such as Sale Deed, EC, Link Documents, Property Tax Receipt, and NOCs (such as loan and lease clearance) for buyers to verify.
+                      Genuine property-related documents such as Ownership Proof, Property Tax Receipt, and NOCs for buyers to verify.
                     </li>
                     <li>
                       Basic contact details of the owner/lister for the buyers to connect for sale or rent.
@@ -688,66 +688,27 @@ export const LegalPage: React.FC<LegalPageProps> = ({
                         Help &amp; Property Verification
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mt-3">
-                        Our verification specialists are available 6 days a week to assist with property ownership verification, title deed &amp; EC documents, owner access plans, or general platform queries.
+                        Our support team is available to assist with property ownership verification, owner access plans, or general platform queries via email.
                       </p>
                     </div>
 
                     <div className="space-y-4">
-                      {/* Card 1: Operational Center */}
-                      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-[#77101F]/10 text-[#77101F] flex items-center justify-center shrink-0 mt-0.5">
-                          <MapPin className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-extrabold text-slate-900 text-sm">
-                            {contactInfo.operationalCenterTitle || 'Hyderabad Operational Center'}
-                          </h3>
-                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                            {contactInfo.operationalAddress || 'Hyderabad, Telangana'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Card 2: Direct Owner Support Helpline */}
-                      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-[#77101F]/10 text-[#77101F] flex items-center justify-center shrink-0 mt-0.5">
-                          <Phone className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-extrabold text-slate-900 text-sm">
-                            Direct Owner Support Helpline
-                          </h3>
-                          <div className="text-xs sm:text-sm font-mono font-bold text-slate-700 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                            <span>{contactInfo.supportPhone || '+91 96526 63763'}</span>
-                            {contactInfo.supportSecondaryPhone && (
-                              <span>{contactInfo.supportSecondaryPhone}</span>
-                            )}
-                            {!contactInfo.supportSecondaryPhone &&
-                              contactInfo.supportWhatsApp &&
-                              contactInfo.supportWhatsApp !== contactInfo.supportPhone && (
-                                <span>{contactInfo.supportWhatsApp}</span>
-                              )}
-                          </div>
-                          <p className="text-[11px] text-slate-400 mt-1">
-                            {contactInfo.supportHours || 'Monday – Saturday, 9:00 AM – 8:00 PM IST'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Card 3: Email Correspondence */}
+                      {/* Support Email Card */}
                       <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex items-start gap-4">
                         <div className="w-10 h-10 rounded-xl bg-[#77101F]/10 text-[#77101F] flex items-center justify-center shrink-0 mt-0.5">
                           <Mail className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-extrabold text-slate-900 text-sm">
-                            Email Correspondence
+                            Support Email
                           </h3>
-                          <div className="text-xs sm:text-sm text-slate-600 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-medium">
-                            <span>{contactInfo.supportEmail || 'support@trussets.in'}</span>
-                            {contactInfo.verificationEmail && (
-                              <span>{contactInfo.verificationEmail}</span>
-                            )}
+                          <div className="text-xs sm:text-sm text-slate-700 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-semibold">
+                            <a
+                              href={`mailto:${contactInfo.supportEmail || 'support@trussets.in'}`}
+                              className="text-[#77101F] hover:underline break-all"
+                            >
+                              {contactInfo.supportEmail || 'support@trussets.in'}
+                            </a>
                           </div>
                         </div>
                       </div>
@@ -761,7 +722,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({
                         Send Inquiry to Specialist
                       </h3>
                       <p className="text-xs text-slate-500 mt-1 mb-6">
-                        Receive rapid callback from our verified desk.
+                        Our support desk will respond to your inquiry via email.
                       </p>
 
                       {submitError && (
@@ -941,14 +902,18 @@ export const LegalPage: React.FC<LegalPageProps> = ({
                     <Mail className="w-3.5 h-3.5 text-[#77101F]" />{' '}
                     {contactInfo.supportEmail || 'support@trussets.in'}
                   </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-[#77101F]" />{' '}
-                    {contactInfo.supportPhone || '+91 96526 63763'}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-[#77101F]" />{' '}
-                    {contactInfo.operationalAddress || 'Hyderabad, Telangana, India'}
-                  </span>
+                  {activeTab !== 'help' && (
+                    <>
+                      <span className="inline-flex items-center gap-1">
+                        <Phone className="w-3.5 h-3.5 text-[#77101F]" />{' '}
+                        {contactInfo.supportPhone || '+91 96526 63763'}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#77101F]" />{' '}
+                        {contactInfo.operationalAddress || 'Hyderabad, Telangana, India'}
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
 

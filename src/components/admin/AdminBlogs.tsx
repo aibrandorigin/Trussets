@@ -39,7 +39,7 @@ export const AdminBlogs: React.FC = () => {
     featuredImage: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&auto=format&fit=crop',
     author: 'TrustSets Editorial Team',
     category: 'Real Estate Insights',
-    tags: ['Title Deed', 'Property Buying', 'Verification'],
+    tags: ['Direct Owner', 'Property Buying', 'Verification'],
     seoTitle: '',
     seoDescription: '',
     seoKeywords: ['trustsets', 'real estate', 'verified plots'],
@@ -85,7 +85,7 @@ export const AdminBlogs: React.FC = () => {
       featuredImage: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&auto=format&fit=crop',
       author: 'TrustSets Editorial Team',
       category: 'Real Estate Insights',
-      tags: ['Title Deed', 'Property Advice'],
+      tags: ['Direct Owner', 'Property Advice'],
       seoTitle: '',
       seoDescription: '',
       seoKeywords: ['real estate', 'trustsets'],
@@ -200,7 +200,7 @@ export const AdminBlogs: React.FC = () => {
         >
           <option value="">All Categories</option>
           <option value="Real Estate Insights">Real Estate Insights</option>
-          <option value="Legal & Title Deeds">Legal & Title Deeds</option>
+          <option value="Legal & Verification">Legal &amp; Verification</option>
           <option value="Rental Advice">Rental Advice</option>
           <option value="Market Trends">Market Trends</option>
         </select>
@@ -339,7 +339,7 @@ export const AdminBlogs: React.FC = () => {
                   value={formData.title || ''}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   required
-                  placeholder="e.g. 5 Common Title Deed Loopholes Every Land Buyer in Hyderabad Must Know"
+                  placeholder="e.g. 5 Essential Property Checks Every Land Buyer in Hyderabad Must Know"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none font-bold"
                 />
               </div>
@@ -363,7 +363,7 @@ export const AdminBlogs: React.FC = () => {
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none font-medium"
                   >
                     <option value="Real Estate Insights">Real Estate Insights</option>
-                    <option value="Legal & Title Deeds">Legal & Title Deeds</option>
+                    <option value="Legal & Verification">Legal &amp; Verification</option>
                     <option value="Rental Advice">Rental Advice</option>
                     <option value="Market Trends">Market Trends</option>
                   </select>

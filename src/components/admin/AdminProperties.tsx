@@ -219,7 +219,7 @@ export const AdminProperties: React.FC<AdminPropertiesProps> = ({ initialFilter 
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Governed marketplace listings, verified title deeds, and transaction lifecycles.
+            Governed marketplace listings, verified owners, and transaction lifecycles.
           </p>
         </div>
 
@@ -346,8 +346,8 @@ export const AdminProperties: React.FC<AdminPropertiesProps> = ({ initialFilter 
               }}
               className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:bg-white focus:outline-none"
             >
-              <option value="">Title Deed (All)</option>
-              <option value="Verified">Verified Deed</option>
+              <option value="">Verification (All)</option>
+              <option value="Verified">Verified Owner</option>
               <option value="Pending">Pending Review</option>
               <option value="Rejected">Rejected</option>
             </select>
@@ -387,7 +387,7 @@ export const AdminProperties: React.FC<AdminPropertiesProps> = ({ initialFilter 
                 <th className="py-3 px-3">Status / Age</th>
                 <th className="py-3 px-3">Location</th>
                 <th className="py-3 px-3">Listed Date</th>
-                <th className="py-3 px-3">Title Deed</th>
+                <th className="py-3 px-3">Verification</th>
                 <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -484,7 +484,7 @@ export const AdminProperties: React.FC<AdminPropertiesProps> = ({ initialFilter 
                       {p.listedDate}
                     </td>
 
-                    {/* Title Deed Toggle */}
+                    {/* Verification Toggle */}
                     <td className="py-3 px-3">
                       <button
                         onClick={() => handleVerifyDeed(p, !p.saleDeedVerified)}
@@ -493,15 +493,15 @@ export const AdminProperties: React.FC<AdminPropertiesProps> = ({ initialFilter 
                             ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                             : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                         }`}
-                        title="Click to toggle Title Deed verification status"
+                        title="Click to toggle verification status"
                       >
                         {p.saleDeedVerified ? (
                           <>
-                            <ShieldCheck className="w-3 h-3 text-emerald-700" /> Deed Verified
+                            <ShieldCheck className="w-3 h-3 text-emerald-700" /> Verified
                           </>
                         ) : (
                           <>
-                            <Clock className="w-3 h-3 text-amber-700" /> Pending Deed
+                            <Clock className="w-3 h-3 text-amber-700" /> Pending
                           </>
                         )}
                       </button>
@@ -660,12 +660,12 @@ export const AdminProperties: React.FC<AdminPropertiesProps> = ({ initialFilter 
                 <div className="font-bold text-slate-800">{selectedProperty.plan || 'Gold Plan'}</div>
               </div>
               <div>
-                <span className="text-slate-400 font-medium">Title Deed Status</span>
+                <span className="text-slate-400 font-medium">Verification Status</span>
                 <div>
                   {selectedProperty.saleDeedVerified ? (
-                    <span className="text-emerald-700 font-bold">Verified Title</span>
+                    <span className="text-emerald-700 font-bold">Verified Owner</span>
                   ) : (
-                    <span className="text-amber-700 font-bold">Pending Deed</span>
+                    <span className="text-amber-700 font-bold">Pending Review</span>
                   )}
                 </div>
               </div>
@@ -855,14 +855,14 @@ export const AdminProperties: React.FC<AdminPropertiesProps> = ({ initialFilter 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Title Deed KYC</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Owner KYC Verification</label>
                   <select
                     value={editFormData.saleDeedVerified ? 'true' : 'false'}
                     onChange={(e) => setEditFormData({ ...editFormData, saleDeedVerified: e.target.value === 'true' })}
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none font-medium"
                   >
-                    <option value="true">Verified Title Deed</option>
-                    <option value="false">Pending Deed Review</option>
+                    <option value="true">Verified Owner</option>
+                    <option value="false">Pending Review</option>
                   </select>
                 </div>
                 <div>

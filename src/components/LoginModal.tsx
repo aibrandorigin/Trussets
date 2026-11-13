@@ -31,6 +31,7 @@ interface LoginModalProps {
   onLoginSuccess: (user: UserProfile) => void;
   currentCity?: string;
   onNavigateToAdmin?: () => void;
+  isFullScreenAppGate?: boolean;
 }
 
 type MainView = 'login' | 'signup' | 'forgot-password' | 'complete-profile';
@@ -43,6 +44,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onLoginSuccess,
   currentCity = '',
   onNavigateToAdmin,
+  isFullScreenAppGate = false,
 }) => {
   // Navigation & tabs
   const [view, setView] = useState<MainView>('login');
@@ -454,20 +456,29 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-xs overflow-y-auto">
+    <div
+      className={
+        isFullScreenAppGate
+          ? 'min-h-screen w-full bg-gradient-to-b from-[#77101F] via-[#5a0b17] to-[#3b060e] flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto'
+          : 'fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-xs overflow-y-auto'
+      }
+      style={isFullScreenAppGate ? { paddingTop: 'max(env(safe-area-inset-top, 16px), 16px)', paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 16px)' } : undefined}
+    >
       <div 
         id="login-modal-card"
         className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-auto"
       >
         {/* Brand Header */}
         <div className="bg-gradient-to-r from-[#77101F] to-[#5a0b17] text-white p-5 sm:p-6 relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors text-white cursor-pointer"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {!isFullScreenAppGate && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors text-white cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
           
           <div className="mb-2">
             <TrussetsLogo size="sm" variant="white" />
@@ -1293,6 +1304,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </span>
             <span>Zero Brokerage Policy</span>
           </div>
+
+          {isFullScreenAppGate && (
+            <div className="mt-4 pt-3 border-t border-slate-100 text-center">
+              <button
+                type="button"
+                id="app-login-skip-btn"
+                onClick={onClose}
+                className="text-xs font-bold text-slate-500 hover:text-[#77101F] transition-colors cursor-pointer"
+              >
+                Continue without signing in →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

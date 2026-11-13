@@ -233,7 +233,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
               <button
                 id="admin-instant-test-login-btn"
                 type="button"
-                onClick={() => handleInstantTestLogin('trussets@gmail.com')}
+                onClick={() => handleInstantTestLogin(testAccounts[0]?.email)}
                 disabled={isTestLoggingIn || isLoading}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer shrink-0 disabled:opacity-50"
               >

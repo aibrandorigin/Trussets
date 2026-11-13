@@ -132,6 +132,9 @@ export function mapServerUserToUserProfile(serverUser: any): UserProfile {
     propertiesCount: serverUser.listedProperties?.length || 0,
     updated_at: serverUser.updated_at,
     version: serverUser.version,
+    kycStatus: serverUser.kycStatus || (serverUser.verified ? 'Verified' : 'Not Submitted'),
+    kycRejectionReason: serverUser.kycRejectionReason || '',
+    kycDocuments: Array.isArray(serverUser.kycDocuments) ? serverUser.kycDocuments : [],
     isAdmin: !!(serverUser.isAdmin || serverUser.isStaff),
     isStaff: !!serverUser.isStaff,
     staffRole: serverUser.staffRole || serverUser.role,
@@ -569,6 +572,80 @@ export const userService = {
     const updatedList = Array.isArray(body.savedPropertyIds) ? body.savedPropertyIds : [];
     broadcastUserSync('WISHLIST_UPDATED', updatedList);
     return updatedList;
+  },
+
+  // KYC Documents
+  async getKycDocuments(userId: string): Promise<{
+    kycStatus: 'Not Submitted' | 'Pending Review' | 'Verified' | 'Rejected';
+    kycRejectionReason?: string;
+    documents: any[];
+  }> {
+    const res = await fetch(`/api/user/kyc-documents?userId=${encodeURIComponent(userId)}`, {
+      headers: { 'x-user-id': userId },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || 'Failed to load KYC documents');
+    }
+    return body;
+  },
+
+  async uploadKycDocument(params: {
+    userId: string;
+    docType: string;
+    documentNumber?: string;
+    file: File;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    document: any;
+    documents: any[];
+    kycStatus: string;
+    user: UserProfile;
+  }> {
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read selected file.'));
+      reader.readAsDataURL(params.file);
+    });
+
+    const res = await fetch('/api/user/kyc-documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: params.userId,
+        docType: params.docType,
+        documentNumber: params.documentNumber || '',
+        fileName: params.file.name,
+        mimeType: params.file.type,
+        base64Data,
+      }),
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || 'Failed to upload KYC document');
+    }
+
+    const mapped = mapServerUserToUserProfile(body.user);
+    broadcastUserSync('PROFILE_UPDATED', mapped);
+    return {
+      ...body,
+      user: mapped,
+    };
+  },
+
+  async deleteKycDocument(userId: string, docId: string): Promise<{ success: boolean; documents: any[]; kycStatus: string }> {
+    const res = await fetch(`/api/user/kyc-documents/${encodeURIComponent(docId)}?userId=${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': userId },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || 'Failed to delete KYC document');
+    }
+    return body;
   },
 
   // Logout

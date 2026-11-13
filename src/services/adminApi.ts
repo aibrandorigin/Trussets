@@ -230,6 +230,16 @@ export const adminApi = {
     });
   },
 
+  updateUserKycStatus: async (
+    id: string,
+    data: { docId?: string; status: 'Verified' | 'Rejected' | 'Pending'; rejectionReason?: string }
+  ): Promise<{ success: boolean; user: AdminUserListItem }> => {
+    return apiRequest(`/api/admin/users/${id}/kyc-status`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
   toggleUserStatus: async (id: string, status?: 'Active' | 'Inactive'): Promise<{ user: AdminUserListItem }> => {
     return apiRequest(`/api/admin/users/${id}/status`, {
       method: 'PUT',
@@ -532,6 +542,32 @@ export const adminApi = {
     });
   },
 
+  updateProfile: async (data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    department?: string;
+    roleTitle?: string;
+  }): Promise<{ success: boolean; message: string; token?: string; admin: AdminUser }> => {
+    const res = await apiRequest<{ success: boolean; message: string; token?: string; admin: AdminUser }>(
+      '/api/admin/profile',
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+    if (res.token) {
+      adminAuthStorage.setToken(res.token);
+    }
+    if (res.admin) {
+      try {
+        localStorage.setItem('trussets_admin_user', JSON.stringify(res.admin));
+        window.dispatchEvent(new CustomEvent('trussets:admin-updated', { detail: res.admin }));
+      } catch {}
+    }
+    return res;
+  },
+
   changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
     return apiRequest('/api/admin/change-password', {
       method: 'PUT',
@@ -565,7 +601,16 @@ export const adminApi = {
 
   updateAdmin: async (
     id: string,
-    data: { role?: string; roleTitle?: string; department?: string; status?: 'Active' | 'Suspended'; permissions?: string[] }
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      role?: string;
+      roleTitle?: string;
+      department?: string;
+      status?: 'Active' | 'Suspended';
+      permissions?: string[];
+    }
   ): Promise<{ success: boolean; staff: any }> => {
     return apiRequest(`/api/admin/staff/${id}`, {
       method: 'PUT',

@@ -58,6 +58,16 @@ export const AdminSettings: React.FC = () => {
   const logoWhiteInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
 
+  // Logged-in Admin Profile Details
+  const [adminProfileName, setAdminProfileName] = useState('');
+  const [adminProfileEmail, setAdminProfileEmail] = useState('');
+  const [adminProfilePhone, setAdminProfilePhone] = useState('');
+  const [adminProfileDepartment, setAdminProfileDepartment] = useState('');
+  const [adminProfileRoleTitle, setAdminProfileRoleTitle] = useState('');
+  const [adminProfileError, setAdminProfileError] = useState('');
+  const [adminProfileSuccess, setAdminProfileSuccess] = useState('');
+  const [isUpdatingAdminProfile, setIsUpdatingAdminProfile] = useState(false);
+
   // Password Change
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -76,6 +86,21 @@ export const AdminSettings: React.FC = () => {
   const [newAdminError, setNewAdminError] = useState('');
   const [newAdminSuccess, setNewAdminSuccess] = useState('');
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+
+  const fetchCurrentAdminProfile = async () => {
+    try {
+      const meRes = await adminApi.getMe();
+      if (meRes?.admin) {
+        setAdminProfileName(meRes.admin.name || '');
+        setAdminProfileEmail(meRes.admin.email || '');
+        setAdminProfilePhone(meRes.admin.phone || '');
+        setAdminProfileDepartment(meRes.admin.department || '');
+        setAdminProfileRoleTitle(meRes.admin.roleTitle || '');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchAdmins = async () => {
     try {
@@ -123,7 +148,35 @@ export const AdminSettings: React.FC = () => {
   useEffect(() => {
     fetchSettings();
     fetchAdmins();
+    fetchCurrentAdminProfile();
   }, []);
+
+  const handleUpdateAdminProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminProfileError('');
+    setAdminProfileSuccess('');
+    if (!adminProfileName.trim() || !adminProfileEmail.trim()) {
+      setAdminProfileError('Admin name and email address are required.');
+      return;
+    }
+    try {
+      setIsUpdatingAdminProfile(true);
+      await adminApi.updateProfile({
+        name: adminProfileName.trim(),
+        email: adminProfileEmail.trim(),
+        phone: adminProfilePhone.trim(),
+        department: adminProfileDepartment.trim(),
+        roleTitle: adminProfileRoleTitle.trim(),
+      });
+      setAdminProfileSuccess('Admin profile updated & synced across Cloud SQL!');
+      fetchAdmins();
+      setTimeout(() => setAdminProfileSuccess(''), 4000);
+    } catch (err: any) {
+      setAdminProfileError(err.message || 'Failed to update admin profile.');
+    } finally {
+      setIsUpdatingAdminProfile(false);
+    }
+  };
 
   const handleCreateNewAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -777,8 +830,97 @@ export const AdminSettings: React.FC = () => {
           </form>
         </div>
 
-        {/* Right Column: Security & Backups */}
+        {/* Right Column: Admin Profile, Security & Backups */}
         <div className="space-y-6">
+          {/* Administrator Profile Details */}
+          <form
+            onSubmit={handleUpdateAdminProfile}
+            className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-3.5"
+          >
+            <h3 className="text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-[#77101F]" />
+              Administrator Profile Details
+            </h3>
+
+            {adminProfileError && (
+              <div className="p-2.5 bg-red-50 text-red-800 rounded-xl text-xs font-bold border border-red-200">
+                {adminProfileError}
+              </div>
+            )}
+
+            {adminProfileSuccess && (
+              <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-xl text-xs font-bold border border-emerald-200">
+                {adminProfileSuccess}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Admin Full Name</label>
+              <input
+                type="text"
+                value={adminProfileName}
+                onChange={(e) => setAdminProfileName(e.target.value)}
+                required
+                placeholder="Administrator Name"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Admin Login Email</label>
+              <input
+                type="email"
+                value={adminProfileEmail}
+                onChange={(e) => setAdminProfileEmail(e.target.value)}
+                required
+                placeholder="admin@domain.com"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Mobile / Phone Number</label>
+              <input
+                type="text"
+                value={adminProfilePhone}
+                onChange={(e) => setAdminProfilePhone(e.target.value)}
+                placeholder="+91 9652663763"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Role Title</label>
+                <input
+                  type="text"
+                  value={adminProfileRoleTitle}
+                  onChange={(e) => setAdminProfileRoleTitle(e.target.value)}
+                  placeholder="Super Administrator"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Department</label>
+                <input
+                  type="text"
+                  value={adminProfileDepartment}
+                  onChange={(e) => setAdminProfileDepartment(e.target.value)}
+                  placeholder="Platform Governance"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isUpdatingAdminProfile}
+              className="w-full py-2.5 bg-[#77101F] hover:bg-[#600c19] text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50"
+            >
+              {isUpdatingAdminProfile ? 'Saving & Syncing...' : 'Save Admin Profile'}
+            </button>
+          </form>
+
           {/* Password Update */}
           <form
             onSubmit={handleChangePassword}

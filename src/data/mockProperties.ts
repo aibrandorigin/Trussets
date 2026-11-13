@@ -34,8 +34,8 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     propertyAgeYears: 1,
     parkingSlots: '2 Covered Car Parks',
     
-    primaryBadge: '✓ Verified Deed',
-    badgeType: 'verified-deed',
+    primaryBadge: '✓ Verified Owner',
+    badgeType: 'verified-owner',
     uploaderType: 'individual',
     uploaderName: 'P. Venkat Reddy (Direct Owner)',
     ownerPhone: '+91 98490 23456',
@@ -44,7 +44,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     reraNumber: 'P02400003189',
     reraApproved: true,
     municipalApproval: 'HMDA Approved Gated Villa',
-    ecYears: 30,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -115,7 +115,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     reraNumber: 'P02400004921',
     reraApproved: true,
     municipalApproval: 'HMDA & DTCP Sanctioned Layout No. 42/LO/Plg/HMDA/2024',
-    ecYears: 34,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -140,13 +140,13 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
       'Located along the 100ft Shankarpally-Mokila Arterial Highway',
       '5 mins to Indus International School',
       '18 mins drive to Neopolis SEZ & Kokapet',
-      'Clear title with spot spot registration clearance at Shankarpally SRO'
+      'Spot registration ready at Shankarpally SRO'
     ],
     images: [
       'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=1200&q=80'
     ],
-    description: 'Immediate clear title 200 Sq. Yds residential plot (dimensions 36x50) in a premium gated layout at Mokila. Facing North-East with a 60-ft wide blacktop internal avenue. 100% clear title with 34-year Nil Encumbrance Certificate verified. Bank loans sanctioned by SBI and HDFC.'
+    description: 'Immediate registration 200 Sq. Yds residential plot (dimensions 36x50) in a premium gated layout at Mokila. Facing North-East with a 60-ft wide blacktop internal avenue. Verified direct owner listing with bank loans sanctioned by SBI and HDFC.'
   },
   {
     id: 'prop-3',
@@ -190,7 +190,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     reraNumber: 'P02400001088',
     reraApproved: true,
     municipalApproval: 'GHMC & Fire NOC Certified',
-    ecYears: 30,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -258,8 +258,8 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     ownerWhatsapp: '919440154321',
     
     reraApproved: 'NA',
-    municipalApproval: 'Revenue Department Clear Dharani Title',
-    ecYears: 40,
+    municipalApproval: 'Revenue Department Verified',
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -324,7 +324,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     reraNumber: 'P02400000543',
     reraApproved: true,
     municipalApproval: 'GHMC Sanctioned & Full Fire Dept NOC',
-    ecYears: 30,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -394,7 +394,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     
     reraApproved: 'NA',
     municipalApproval: 'GHMC Building Sanction Letter No. 1102/2021',
-    ecYears: 32,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -421,7 +421,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
       'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
     ],
-    description: 'Standalone luxury 4 BHK duplex architect-designed bungalow on 300 sq.yds plot in Jubilee Hills. Features teak wood fittings, imported sanitaryware, rooftop solar grid system, private lawn, and CCTV surveillance. Complete title deed authenticated with 0% brokerage.'
+    description: 'Standalone luxury 4 BHK duplex architect-designed bungalow on 300 sq.yds plot in Jubilee Hills. Features teak wood fittings, imported sanitaryware, rooftop solar grid system, private lawn, and CCTV surveillance. Direct owner verified listing with 0% brokerage.'
   },
   
   // Rental Listings
@@ -467,7 +467,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     
     reraApproved: true,
     municipalApproval: 'GHMC Certified',
-    ecYears: 30,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -535,7 +535,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     
     reraApproved: 'NA',
     municipalApproval: 'TSIIC & GHMC Sanctioned',
-    ecYears: 30,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -605,7 +605,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     
     reraApproved: true,
     municipalApproval: 'HMDA Approved Gated Community',
-    ecYears: 30,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -676,7 +676,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     
     reraApproved: 'NA',
     municipalApproval: 'Panchayat & Fire Dept Sanctioned',
-    ecYears: 30,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -747,8 +747,8 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     ownerWhatsapp: '919849987654',
     
     reraApproved: 'NA',
-    municipalApproval: 'Clear Revenue Land Title',
-    ecYears: 30,
+    municipalApproval: 'Revenue Land Verified',
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -808,8 +808,8 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     possessionStatus: 'Ready to Move In',
     parkingSlots: 'Over 30 Heavy Vehicles',
     
-    primaryBadge: '✓ Verified Deed',
-    badgeType: 'verified-deed',
+    primaryBadge: '✓ Verified Owner',
+    badgeType: 'verified-owner',
     uploaderType: 'individual',
     uploaderName: 'G. Mohan Reddy (Direct Owner)',
     ownerPhone: '+91 99080 33445',
@@ -817,7 +817,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     
     reraApproved: 'NA',
     municipalApproval: 'Commercial Revenue Converted Land',
-    ecYears: 32,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -874,8 +874,8 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     possessionStatus: 'Ready to Move In',
     parkingSlots: '4 Covered Car Parks',
     
-    primaryBadge: '✓ Verified Deed',
-    badgeType: 'verified-deed',
+    primaryBadge: '✓ Verified Owner',
+    badgeType: 'verified-owner',
     uploaderType: 'individual',
     uploaderName: 'P. Ravinder Reddy (Direct Owner)',
     ownerPhone: '+91 98492 55667',
@@ -883,7 +883,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     
     reraApproved: 'NA',
     municipalApproval: 'Panchayat & Revenue Approved',
-    ecYears: 35,
+    ecYears: 0,
     saleDeedVerified: true,
     mortgageStatus: 'Free From Loan',
     courtLitigations: 'No',
@@ -902,13 +902,13 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     locationHighlights: [
       '20 mins from APPA Junction & ORR',
       'Organic fruit trees, drip irrigation, and luxury pool deck',
-      'Complete 35-year Encumbrance Certificate verified'
+      'Ready for immediate registration and handover'
     ],
     images: [
       'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'
     ],
-    description: 'Magnificent 1-acre gated estate with an architectural 4 BHK bungalow in Moinabad. Features private infinity pool, outdoor barbecue patio, mature teak and mango trees, solar power, and direct clear title.'
+    description: 'Magnificent 1-acre gated estate with an architectural 4 BHK bungalow in Moinabad. Features private infinity pool, outdoor barbecue patio, mature teak and mango trees, solar power, and direct owner sale.'
   }
 ];
 

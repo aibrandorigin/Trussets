@@ -83,7 +83,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     if (property.roadWidthFt) pills.push(`${property.roadWidthFt} Ft Road`);
     if (property.floorInfo) pills.push(property.floorInfo);
     if (property.parkingSlots) pills.push(property.parkingSlots);
-    if (property.category === 'plots') pills.push('Clear Title');
+    if (property.category === 'plots') pills.push('HMDA / DTCP');
     if (property.category === 'lands') pills.push('Borewell Ready', 'Red Soil');
     if (property.category === 'commercial') pills.push('Ground Floor', '100 Ft Frontage');
     return pills.slice(0, 3);
@@ -118,7 +118,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
         <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap pointer-events-none z-10 max-w-[calc(100%-60px)]">
           <div className="flex items-center gap-1 px-2.5 py-1 bg-emerald-800/90 backdrop-blur-xs text-white text-[11px] font-bold rounded-full shadow-md">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-            <span>{property.primaryBadge}</span>
+            <span>{property.primaryBadge === '✓ Verified Deed' ? '✓ Verified Owner' : property.primaryBadge}</span>
           </div>
           {property.propertyStatus && (
             <div className={`px-2 py-0.5 backdrop-blur-xs text-[10px] font-extrabold rounded-full shadow-md uppercase tracking-wider ${

@@ -24,14 +24,18 @@ import {
   CreditCard,
   AlertCircle,
   Compass,
-  RotateCcw
+  RotateCcw,
+  Download,
+  X,
+  XCircle
 } from 'lucide-react';
-import { UserProfile, PropertyListing } from '../types';
+import { UserProfile, PropertyListing, KycDocumentRecord } from '../types';
 import { PropertyCard } from './PropertyCard';
 import { TrussetsLogo } from './TrussetsLogo';
 import { userService } from '../services/userService';
 import { normalizeMobile } from '../utils/phone';
 import { detectUserLocation } from '../utils/geolocation';
+import { resolveProductionUrl } from '../utils/capacitorBridge';
 
 interface ProfilePageProps {
   user: UserProfile | null;
@@ -118,6 +122,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const [isDeletingAccount, setIsDeletingAccount] = useState<boolean>(false);
   const [deleteAccountError, setDeleteAccountError] = useState<string>('');
 
+  // KYC Document Vault state
+  const [kycDocs, setKycDocs] = useState<KycDocumentRecord[]>(user?.kycDocuments || []);
+  const [kycStatus, setKycStatus] = useState<string>(user?.kycStatus || (user?.verifiedIdentity ? 'Verified' : 'Not Submitted'));
+  const [kycRejectionReason, setKycRejectionReason] = useState<string>(user?.kycRejectionReason || '');
+  const [kycDocType, setKycDocType] = useState<string>('Aadhaar Card');
+  const [kycDocNumber, setKycDocNumber] = useState<string>('');
+  const [kycSelectedFile, setKycSelectedFile] = useState<File | null>(null);
+  const [isUploadingKyc, setIsUploadingKyc] = useState<boolean>(false);
+  const [kycError, setKycError] = useState<string>('');
+  const [kycSuccess, setKycSuccess] = useState<string>('');
+  const [previewKycDoc, setPreviewKycDoc] = useState<KycDocumentRecord | null>(null);
+  const kycFileInputRef = React.useRef<HTMLInputElement>(null);
+
   const handleDetectProfileLocation = async () => {
     setIsDetectingLocation(true);
     setLocationDetectStatus('');
@@ -144,6 +161,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       setEditCity(user.city || '');
       setEditLocation(user.location || user.city || '');
       setEditState(user.state || 'Telangana');
+      if (Array.isArray(user.kycDocuments)) {
+        setKycDocs(user.kycDocuments);
+      }
+      if (user.kycStatus) {
+        setKycStatus(user.kycStatus);
+      }
+      if (user.kycRejectionReason !== undefined) {
+        setKycRejectionReason(user.kycRejectionReason || '');
+      }
     }
   }, [user]);
 
@@ -160,7 +186,76 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       })
       .catch(err => console.error('Failed to load subscriptions:', err))
       .finally(() => setIsLoadingSubs(false));
+
+    userService
+      .getKycDocuments(user.id)
+      .then((res) => {
+        setKycDocs(res.documents || []);
+        setKycStatus(res.kycStatus || 'Not Submitted');
+        setKycRejectionReason(res.kycRejectionReason || '');
+      })
+      .catch((err) => console.warn('Could not load KYC documents:', err));
   }, [user?.id]);
+
+  const handleUploadKyc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id) return;
+    setKycError('');
+    setKycSuccess('');
+
+    if (!kycSelectedFile) {
+      setKycError('Please select a document image (JPG/PNG/WebP) or PDF file to upload.');
+      return;
+    }
+    if (kycSelectedFile.size > 10 * 1024 * 1024) {
+      setKycError('Selected file exceeds 10MB limit. Please choose a smaller file.');
+      return;
+    }
+
+    try {
+      setIsUploadingKyc(true);
+      const res = await userService.uploadKycDocument({
+        userId: user.id,
+        docType: kycDocType,
+        documentNumber: kycDocNumber.trim(),
+        file: kycSelectedFile,
+      });
+      setKycDocs(res.documents || []);
+      setKycStatus(res.kycStatus || 'Pending Review');
+      setKycRejectionReason('');
+      setKycDocNumber('');
+      setKycSelectedFile(null);
+      if (kycFileInputRef.current) kycFileInputRef.current.value = '';
+      setKycSuccess(res.message || 'Document uploaded successfully for admin verification.');
+      if (res.user && onUpdateUser) {
+        onUpdateUser(res.user);
+      }
+      setTimeout(() => setKycSuccess(''), 5000);
+    } catch (err: any) {
+      setKycError(err?.message || 'Failed to upload KYC document.');
+    } finally {
+      setIsUploadingKyc(false);
+    }
+  };
+
+  const handleDeleteKyc = async (docId: string) => {
+    if (!user?.id) return;
+    setKycError('');
+    try {
+      const res = await userService.deleteKycDocument(user.id, docId);
+      setKycDocs(res.documents || []);
+      setKycStatus(res.kycStatus || 'Not Submitted');
+      if (onUpdateUser) {
+        onUpdateUser({
+          ...user,
+          kycDocuments: res.documents || [],
+          kycStatus: (res.kycStatus as any) || 'Not Submitted',
+        });
+      }
+    } catch (err: any) {
+      setKycError(err?.message || 'Could not remove document.');
+    }
+  };
 
   // If user is not logged in, show clean authentication prompt
   if (!user) {
@@ -709,7 +804,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
               </div>
               <h3 className="text-base font-bold text-slate-900">You haven't posted any properties yet</h3>
               <p className="text-xs text-slate-500 mt-1.5 mb-5 max-w-md mx-auto">
-                Sell or rent your flat, villa, open plot, or commercial space with zero brokerage and verified title deeds.
+                Sell or rent your flat, villa, open plot, or commercial space with zero brokerage and verified owners.
               </p>
               <button
                 onClick={onOpenPostWizard}
@@ -809,54 +904,299 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       {/* Tab 4: Document Vault & KYC */}
       {activeTab === 'vault' && (
         <div className="space-y-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-bold text-slate-900">Legal Document Vault & KYC</h2>
-            <p className="text-xs text-slate-500">
-              Trussets verifies official government property documents to provide 0% brokerage direct connections.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Government Identity (Aadhaar / PAN)</h3>
-                    <p className="text-xs text-slate-500">Verified for direct owner identity authentication</p>
-                  </div>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                  Verified
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                Aadhaar masked document ending in <strong>•••• 4921</strong> authenticated.
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Legal Document Vault & KYC</h2>
+              <p className="text-xs text-slate-500">
+                Upload government ID or property ownership documents for Trussets admin verification.
               </p>
             </div>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 w-fit ${
+                kycStatus === 'Verified'
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  : kycStatus === 'Pending Review'
+                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                  : kycStatus === 'Rejected'
+                  ? 'bg-red-100 text-red-800 border border-red-200'
+                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+              }`}
+            >
+              {kycStatus === 'Verified' ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              ) : kycStatus === 'Rejected' ? (
+                <XCircle className="w-3.5 h-3.5 text-red-600" />
+              ) : (
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+              )}
+              KYC Status: {kycStatus}
+            </span>
+          </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
-                    <CheckCircle2 className="w-5 h-5" />
+          {kycRejectionReason && (
+            <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold">Verification Note:</span> {kycRejectionReason}
+              </div>
+            </div>
+          )}
+
+          {/* Upload KYC Document Form */}
+          <form
+            onSubmit={handleUploadKyc}
+            className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-2xs space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-red-50 text-[#77101F] flex items-center justify-center border border-red-100">
+                  <UploadCloud className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Upload KYC Verification Document</h3>
+                  <p className="text-[11px] text-slate-500">
+                    Supported formats: JPG, PNG, WebP, or PDF (max 10MB). Reviewed securely by Trussets Admin.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {kycError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{kycError}</span>
+              </div>
+            )}
+
+            {kycSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>{kycSuccess}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Document Type *</label>
+                <select
+                  value={kycDocType}
+                  onChange={(e) => setKycDocType(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#77101F]"
+                >
+                  <option value="Aadhaar Card">Aadhaar Card</option>
+                  <option value="PAN Card">PAN Card</option>
+                  <option value="Passport">Passport</option>
+                  <option value="Voter ID">Voter ID</option>
+                  <option value="Driving License">Driving License</option>
+                  <option value="Ownership Proof / Utility Bill">Ownership / Utility Bill</option>
+                  <option value="Other">Other Government ID</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Document / ID Number (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={kycDocNumber}
+                  onChange={(e) => setKycDocNumber(e.target.value)}
+                  placeholder="e.g. XXXX-XXXX-4921 or ABCDE1234F"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#77101F]"
+                />
+              </div>
+            </div>
+
+            <div className="border-2 border-dashed border-slate-200 hover:border-[#77101F]/50 rounded-2xl p-4 bg-slate-50/70 transition-colors">
+              <input
+                ref={kycFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setKycSelectedFile(file);
+                  setKycError('');
+                }}
+                className="hidden"
+                id="kyc-document-file-input"
+              />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0 text-slate-600">
+                    <FileText className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Registered Title Deed / Sale Deed</h3>
-                    <p className="text-xs text-slate-500">Required for 100% verified resale listings</p>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-800 truncate">
+                      {kycSelectedFile ? kycSelectedFile.name : 'Choose a KYC document image or PDF'}
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      {kycSelectedFile
+                        ? `${(kycSelectedFile.size / 1024).toFixed(1)} KB • Ready to upload`
+                        : 'Clear front scan/photo of your government ID'}
+                    </div>
                   </div>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                  Active
-                </span>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => kycFileInputRef.current?.click()}
+                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                  >
+                    Browse File
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUploadingKyc || !kycSelectedFile}
+                    className="px-4 py-2 bg-[#77101F] hover:bg-[#600c19] text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 shadow-xs"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>{isUploadingKyc ? 'Uploading...' : 'Upload Document'}</span>
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                Encumbrance Certificate (EC) checked with zero registered legal liens or mortgages.
-              </p>
             </div>
+          </form>
+
+          {/* Uploaded Documents List */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-slate-900">
+              Submitted KYC Documents ({kycDocs.length})
+            </h3>
+
+            {kycDocs.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm font-bold text-slate-700">No KYC documents uploaded yet</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Upload your Aadhaar, PAN, Passport, or Voter ID above to complete KYC verification.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {kycDocs.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between gap-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 border border-slate-200">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-bold text-slate-900 truncate">{doc.docType}</h4>
+                          <p className="text-[11px] text-slate-500 truncate">{doc.fileName}</p>
+                          {doc.documentNumber && (
+                            <p className="text-[11px] font-mono text-slate-600 mt-0.5">
+                              ID: {doc.documentNumber}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Uploaded: {new Date(doc.uploadedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
+                          doc.status === 'Verified'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : doc.status === 'Rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {doc.status}
+                      </span>
+                    </div>
+
+                    {doc.rejectionReason && (
+                      <div className="text-[11px] text-red-700 bg-red-50 border border-red-100 rounded-xl p-2">
+                        <strong>Reason:</strong> {doc.rejectionReason}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewKycDoc(doc)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Document</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteKyc(doc.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-red-600 hover:bg-red-50 text-xs font-semibold rounded-lg cursor-pointer transition-colors"
+                        title="Remove document"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* In-App KYC Document Preview Modal */}
+          {previewKycDoc && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setPreviewKycDoc(null);
+              }}
+            >
+              <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-extrabold text-slate-900 truncate">
+                      {previewKycDoc.docType} — {previewKycDoc.fileName}
+                    </h4>
+                    {previewKycDoc.documentNumber && (
+                      <p className="text-xs text-slate-500 font-mono">Number: {previewKycDoc.documentNumber}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={resolveProductionUrl(previewKycDoc.fileUrl)}
+                      download={previewKycDoc.fileName}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewKycDoc(null)}
+                      className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="p-4 bg-slate-50 max-h-[75vh] overflow-auto flex items-center justify-center">
+                  {previewKycDoc.mimeType?.includes('pdf') ? (
+                    <iframe
+                      src={resolveProductionUrl(previewKycDoc.fileUrl)}
+                      title={previewKycDoc.fileName}
+                      className="w-full h-[65vh] rounded-xl border border-slate-200 bg-white"
+                    />
+                  ) : (
+                    <img
+                      src={resolveProductionUrl(previewKycDoc.fileUrl)}
+                      alt={previewKycDoc.docType}
+                      className="max-w-full max-h-[65vh] object-contain rounded-xl border border-slate-200 bg-white"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -980,7 +1320,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
               <CreditCard className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <h3 className="text-base font-bold text-slate-800">No Active Subscription Plan</h3>
               <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                Subscribe to a verified TrustSets buyer or rental plan to unlock direct owner WhatsApp contact details, exact addresses, and title deeds.
+                Subscribe to a verified TrustSets buyer or rental plan to unlock direct owner WhatsApp contact details and exact property addresses.
               </p>
               {onNavigateToPlans && (
                 <button

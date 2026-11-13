@@ -4,7 +4,25 @@ export interface AdminUser {
   phone: string;
   name: string;
   role: string;
+  roleTitle?: string;
+  department?: string;
+  status?: string;
   lastLogin?: string;
+}
+
+export interface AdminUserKycDocument {
+  id: string;
+  docType: string;
+  documentNumber?: string;
+  fileName: string;
+  mimeType: string;
+  fileSize?: number;
+  fileUrl: string;
+  status: 'Pending' | 'Verified' | 'Rejected';
+  rejectionReason?: string;
+  uploadedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
 }
 
 export interface AdminUserListItem {
@@ -21,6 +39,9 @@ export interface AdminUserListItem {
   verified: boolean;
   status: 'Active' | 'Inactive';
   profilePhoto?: string;
+  kycStatus?: 'Not Submitted' | 'Pending Review' | 'Verified' | 'Rejected';
+  kycRejectionReason?: string;
+  kycDocuments?: AdminUserKycDocument[];
   planId?: string;
   planName?: string;
   planType?: 'Buying' | 'Rental';

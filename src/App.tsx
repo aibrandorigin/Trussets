@@ -23,7 +23,7 @@ import { propertyAccessService } from './services/propertyAccessService';
 import { userService, onUserSync } from './services/userService';
 import { adminApi, adminAuthStorage } from './services/adminApi';
 import { brandService } from './services/brandService';
-import { registerAndroidBackButton, subscribeNetworkStatus } from './utils/capacitorBridge';
+import { registerAndroidBackButton, subscribeNetworkStatus, isNativeAndroidOrIOS } from './utils/capacitorBridge';
 import { Building2, Home, MapPin, Compass, RotateCcw, WifiOff } from 'lucide-react';
 
 export default function App() {
@@ -131,8 +131,11 @@ export default function App() {
       return null;
     }
   });
+  const isNativeApp = typeof window !== 'undefined' && isNativeAndroidOrIOS();
+  const [hasDismissedLaunchLogin, setHasDismissedLaunchLogin] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isNetworkOnline, setIsNetworkOnline] = useState<boolean>(true);
+  const showAppLaunchLoginScreen = isNativeApp && !user && !hasDismissedLaunchLogin;
 
   // Sync user state changes to localStorage cache
   useEffect(() => {
@@ -148,6 +151,19 @@ export default function App() {
       console.error(e);
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleAdminUpdated = (e: Event) => {
+      const custom = e as CustomEvent;
+      if (custom.detail) {
+        setAdminUser(custom.detail);
+      }
+    };
+    window.addEventListener('trussets:admin-updated', handleAdminUpdated);
+    return () => {
+      window.removeEventListener('trussets:admin-updated', handleAdminUpdated);
+    };
+  }, []);
 
   // Modals & Wizards
   const [isPostWizardOpen, setIsPostWizardOpen] = useState<boolean>(false);
@@ -249,6 +265,7 @@ export default function App() {
         setUser(null);
         setIsAdminLoggedIn(false);
         setAdminUser(null);
+        setHasDismissedLaunchLogin(false);
         return;
       }
       validateAndSyncSession();
@@ -271,6 +288,7 @@ export default function App() {
     setIsAdminLoggedIn(false);
     setAdminUser(null);
     setUser(null);
+    setHasDismissedLaunchLogin(false);
     handleNavigate('home');
   };
 
@@ -572,6 +590,35 @@ export default function App() {
     activePage,
   ]);
 
+  if (showAppLaunchLoginScreen) {
+    return (
+      <LoginModal
+        isOpen={true}
+        isFullScreenAppGate={true}
+        onClose={() => {
+          setHasDismissedLaunchLogin(true);
+          setIsLoginModalOpen(false);
+        }}
+        currentCity={currentCity === 'Select Location' ? '' : currentCity}
+        onLoginSuccess={(loggedInUser) => {
+          setUser(loggedInUser);
+          setHasDismissedLaunchLogin(true);
+          setIsLoginModalOpen(false);
+          if (adminAuthStorage.isAuthenticated()) {
+            setIsAdminLoggedIn(true);
+            adminApi.getMe().then((res) => setAdminUser(res.admin)).catch(() => {});
+          }
+          fetchBackendProperties();
+        }}
+        onNavigateToAdmin={() => {
+          setHasDismissedLaunchLogin(true);
+          setIsLoginModalOpen(false);
+          handleNavigate('admin');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#1E293B] flex flex-col font-sans selection:bg-red-100 selection:text-[#77101F] w-full max-w-full overflow-x-hidden">
       {/* Network Offline Banner for Mobile/Android */}
@@ -793,7 +840,7 @@ export default function App() {
                   <p className="text-xs sm:text-sm text-white/80 mt-1 max-w-2xl">
                     {activePage === 'rent'
                       ? 'Rent verified apartments, villas, and office spaces directly from owners with zero broker fees.'
-                      : 'Buy verified residential plots, luxury villas, and high-rise apartments with 30-year clear title deeds.'}
+                      : 'Buy verified residential plots, luxury villas, and high-rise apartments directly from genuine owners with zero brokerage.'}
                   </p>
                 </div>
 

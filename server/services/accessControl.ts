@@ -314,10 +314,42 @@ export function canAccessPropertyDetails(
  * Strips or masks protected property fields for public or unauthorized consumers
  * (Requirement 13)
  */
+function cleanLegacyDeedCopy(text: string): string {
+  return text
+    .replace(/Complete\s+\d+-year\s+Encumbrance\s+Certificate\s+verified/gi, 'Direct owner & property documents verified')
+    .replace(/with\s+\d+-year\s+Nil\s+Encumbrance\s+Certificate\s*\(EC\)\s*(and\s*Clear\s*Sale\s*Deed)?/gi, 'with owner KYC and property documents verified')
+    .replace(/\d+-year\s+Nil\s+Encumbrance\s+Certificate(\s*\(EC\))?/gi, 'owner KYC verification')
+    .replace(/\d+-year\s+Encumbrance\s+Certificate(\s*\(EC\))?/gi, 'owner KYC verification')
+    .replace(/Complete\s+title\s+deed\s+authenticated/gi, 'Direct owner listing verified')
+    .replace(/Immediate\s+clear\s+title/gi, 'Ready-to-register')
+    .replace(/Clear\s+title\s+with\s+(spot\s+)+registration\s+clearance/gi, 'Spot registration available directly with owner')
+    .replace(/and\s+direct\s+clear\s+title/gi, 'and direct owner negotiation')
+    .replace(/100%\s+clear\s+title/gi, '100% owner-verified listing')
+    .replace(/\bclear\s+title\b/gi, 'owner-verified property')
+    .replace(/\btitle\s+deed\b/gi, 'property verification')
+    .replace(/Clear\s+Revenue\s+Land\s+Title/gi, 'Revenue Land Verified')
+    .replace(/Revenue\s+Department\s+Clear\s+Dharani\s+Title/gi, 'Revenue Department Verified');
+}
+
 export function sanitizePropertyForPublic(property: any, hasFullAccess: boolean = false) {
+  const normalizedProperty = {
+    ...property,
+    primaryBadge: property.primaryBadge === '✓ Verified Deed' ? '✓ Verified Owner' : property.primaryBadge,
+    badgeType: property.badgeType === 'verified-deed' ? 'verified-owner' : property.badgeType,
+    ecYears: 0,
+    description: typeof property.description === 'string' ? cleanLegacyDeedCopy(property.description) : property.description,
+    municipalApproval:
+      typeof property.municipalApproval === 'string'
+        ? cleanLegacyDeedCopy(property.municipalApproval)
+        : property.municipalApproval,
+    locationHighlights: Array.isArray(property.locationHighlights)
+      ? property.locationHighlights.map((h: any) => (typeof h === 'string' ? cleanLegacyDeedCopy(h) : h))
+      : property.locationHighlights,
+  };
+
   if (hasFullAccess) {
     return {
-      ...property,
+      ...normalizedProperty,
       contactAccess: true,
       hasFullAccess: true,
     };
@@ -325,7 +357,7 @@ export function sanitizePropertyForPublic(property: any, hasFullAccess: boolean 
 
   // Omit or mask sensitive fields
   return {
-    ...property,
+    ...normalizedProperty,
     uploaderName: maskOwnerName(property.uploaderName, property.uploaderType),
     ownerPhone: maskPhoneNumber(property.ownerPhone),
     ownerWhatsapp: '',

@@ -792,7 +792,7 @@ export const AdminAnalytics: React.FC = () => {
           </div>
 
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <div className="text-xs text-slate-400 font-medium">Title Deed Inquiries</div>
+            <div className="text-xs text-slate-400 font-medium">Owner Verification Inquiries</div>
             <div className="text-2xl font-black text-indigo-700 mt-1">943</div>
             <div className="text-[10px] text-slate-500 mt-1">Trust Verification Requests</div>
           </div>

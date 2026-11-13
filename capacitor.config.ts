@@ -8,7 +8,6 @@ const config: CapacitorConfig = {
   appId: 'com.trussets.marketplace',
   appName: 'Trussets',
   webDir: 'dist',
-  bundledWebRuntime: false,
   server: {
     androidScheme: 'https',
     allowNavigation: [

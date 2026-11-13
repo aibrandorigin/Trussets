@@ -245,8 +245,7 @@ export const PropertyPlansPage: React.FC<PropertyPlansPageProps> = ({
           TrustSets Property Plans
         </h1>
         <p className="text-sm sm:text-base text-slate-600 mt-2 max-w-2xl mx-auto">
-          Unlock authenticated direct owner phone numbers, WhatsApp contact, 30-year Encumbrance Certificates (EC),
-          and verified legal documentation with no broker commission.
+          Unlock authenticated direct owner phone numbers, WhatsApp contact, and exact property location details with no broker commission.
         </p>
 
         {/* User Active Plan Status Banner (Requirement 10) */}
@@ -402,7 +401,9 @@ export const PropertyPlansPage: React.FC<PropertyPlansPageProps> = ({
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">{plan.description}</p>
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                          {(plan.description || '').replace(/,?\s*priority deed audit,?/gi, ', ').replace(/automated title verification/gi, 'owner verification')}
+                        </p>
                       </div>
                       <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-bold shrink-0">
                         {plan.validityDays} Days
@@ -496,19 +497,17 @@ export const PropertyPlansPage: React.FC<PropertyPlansPageProps> = ({
                       </div>
                       <div className="flex items-start gap-2 text-xs text-slate-700">
                         <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>30-Year Encumbrance Certificate (EC) Verification</span>
-                      </div>
-                      <div className="flex items-start gap-2 text-xs text-slate-700">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                         <span>Up to {plan.listingsAllowed} Property Inquiries & Unlocks</span>
                       </div>
                       {plan.additionalPoints &&
-                        plan.additionalPoints.map((point, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
-                            <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                            <span>{point}</span>
-                          </div>
-                        ))}
+                        plan.additionalPoints
+                          .filter((point) => !/30.?year|\bec\b|title\s*deed/i.test(point))
+                          .map((point, idx) => (
+                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                              <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                              <span>{point.replace(/Verified Deed Badge/gi, 'Verified Owner Badge')}</span>
+                            </div>
+                          ))}
                     </div>
                   </div>
 

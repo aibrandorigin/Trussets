@@ -322,7 +322,7 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
               {/* Verified Badge */}
               <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-emerald-800/90 backdrop-blur-xs text-white text-xs font-bold rounded-full shadow-lg">
                 <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                <span>{property.primaryBadge}</span>
+                <span>{property.primaryBadge === '✓ Verified Deed' ? '✓ Verified Owner' : property.primaryBadge}</span>
               </div>
 
               {/* Zero Brokerage Badge */}
@@ -513,7 +513,7 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
               </p>
             </div>
 
-            {/* Legal & Title Deed Integrity Card */}
+            {/* Property Approvals & Verification Card */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
@@ -521,23 +521,16 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-slate-900">Legal & Title Deed Verification</h2>
-                    <p className="text-xs text-slate-500">Independent documentation audit under Indian Registration Act</p>
+                    <h2 className="text-base font-bold text-slate-900">Property Approvals &amp; Verification</h2>
+                    <p className="text-xs text-slate-500">Municipal sanction &amp; jurisdiction details</p>
                   </div>
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                  Verified Clean
+                  Verified Owner
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                  <span className="text-slate-400 block font-medium">Encumbrance Certificate (EC)</span>
-                  <span className="text-slate-900 font-bold mt-0.5 block">
-                    {property.ecYears}-Year Clear EC • Zero Prior Claims
-                  </span>
-                </div>
-
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs">
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
                   <span className="text-slate-400 block font-medium">Sub-Registrar Jurisdiction (SRO)</span>
                   <span className="text-slate-900 font-bold mt-0.5 block">
@@ -546,16 +539,16 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                  <span className="text-slate-400 block font-medium">Municipal & Development Approval</span>
+                  <span className="text-slate-400 block font-medium">Municipal &amp; Development Approval</span>
                   <span className="text-slate-900 font-bold mt-0.5 block">
                     {property.municipalApproval} Approved Layout
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                  <span className="text-slate-400 block font-medium">Court Litigations & Disputes</span>
+                  <span className="text-slate-400 block font-medium">Court Litigations &amp; Disputes</span>
                   <span className="text-emerald-700 font-bold mt-0.5 block">
-                    None (Zero Pending Cases in Indian Courts)
+                    None (Zero Pending Cases)
                   </span>
                 </div>
               </div>
@@ -768,7 +761,7 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Physical title document ownership verified</span>
+                  <span>Direct property ownership &amp; identity verified</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />

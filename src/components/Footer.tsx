@@ -21,7 +21,7 @@ export const Footer: React.FC<FooterProps> = ({
   return (
     <footer className="bg-white border-t border-slate-200 pt-12 pb-8 text-slate-600">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 pb-10 border-b border-slate-100">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-100">
           {/* Brand Column (spans 2) */}
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center">
@@ -30,7 +30,7 @@ export const Footer: React.FC<FooterProps> = ({
             <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
               India's premier zero-brokerage direct property marketplace connecting authentic owners and
               genuine buyers. Eliminating dealer markups, middleman commissions, and bogus listings through
-              rigorous title deed and KYC authentication.
+              rigorous owner and KYC authentication.
             </p>
             <div className="pt-2 flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg w-fit">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
@@ -86,51 +86,6 @@ export const Footer: React.FC<FooterProps> = ({
                   className="hover:text-[#881324] transition-colors cursor-pointer"
                 >
                   Commercial
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Trust & Verification */}
-          <div>
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
-              Trust & Verification
-            </h4>
-            <ul className="space-y-2 text-xs font-medium text-slate-500">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage?.('about')}
-                  className="cursor-pointer hover:text-[#881324] transition-colors text-left"
-                >
-                  Direct Verification
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage?.('terms')}
-                  className="cursor-pointer hover:text-[#881324] transition-colors text-left"
-                >
-                  Legal Escrow Guarantee
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage?.('about')}
-                  className="cursor-pointer hover:text-[#881324] transition-colors text-left"
-                >
-                  EC & Title Verification
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage?.('terms')}
-                  className="cursor-pointer hover:text-[#881324] transition-colors text-left"
-                >
-                  RERA Compliance Guide
                 </button>
               </li>
             </ul>

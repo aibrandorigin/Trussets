@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../services/adminApi';
-import { AdminUserListItem } from '../../types/admin';
+import { AdminUserListItem, AdminUserKycDocument } from '../../types/admin';
 import { PropertyListing } from '../../types';
+import { resolveProductionUrl } from '../../utils/capacitorBridge';
 import {
   Users,
   Search,
@@ -27,7 +28,9 @@ import {
   X,
   Plus,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  FileText,
+  Download
 } from 'lucide-react';
 
 interface AdminUsersProps {
@@ -76,6 +79,12 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ initialFilter }) => {
   });
   const [createError, setCreateError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // KYC document review state
+  const [previewKycDoc, setPreviewKycDoc] = useState<AdminUserKycDocument | null>(null);
+  const [kycActionLoadingId, setKycActionLoadingId] = useState<string | null>(null);
+  const [rejectingDocId, setRejectingDocId] = useState<string | null>(null);
+  const [rejectReasonText, setRejectReasonText] = useState('');
 
   // Admin accounts management state
   const [adminsList, setAdminsList] = useState<any[]>([]);
@@ -152,6 +161,29 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ initialFilter }) => {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  // Review KYC Document
+  const handleReviewKycDoc = async (
+    userId: string,
+    docId: string,
+    status: 'Verified' | 'Rejected',
+    rejectionReason?: string
+  ) => {
+    try {
+      setKycActionLoadingId(docId);
+      const res = await adminApi.updateUserKycStatus(userId, { docId, status, rejectionReason });
+      if (res.user) {
+        setSelectedUser(res.user);
+        setUsers((prev) => prev.map((item) => (item.id === userId ? { ...item, ...res.user } : item)));
+      }
+      setRejectingDocId(null);
+      setRejectReasonText('');
+    } catch (e) {
+      console.error('Failed reviewing KYC document:', e);
+    } finally {
+      setKycActionLoadingId(null);
     }
   };
 
@@ -602,25 +634,39 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ initialFilter }) => {
                       {u.accountCreated}
                     </td>
 
-                    {/* Verified Toggle */}
+                    {/* Verified Toggle + KYC Docs Count */}
                     <td className="py-3 px-3">
-                      <button
-                        onClick={() => handleToggleVerify(u)}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-colors ${
-                          u.verified
-                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                        }`}
-                        title="Click to toggle KYC verification"
-                      >
-                        {u.verified ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-700" /> Verified
-                          </>
-                        ) : (
-                          'Unverified'
+                      <div className="flex flex-col items-start gap-1">
+                        <button
+                          onClick={() => handleToggleVerify(u)}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-colors ${
+                            u.verified
+                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          }`}
+                          title="Click to toggle KYC verification"
+                        >
+                          {u.verified ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-700" /> Verified
+                            </>
+                          ) : (
+                            'Unverified'
+                          )}
+                        </button>
+                        {u.kycDocuments && u.kycDocuments.length > 0 && (
+                          <button
+                            onClick={() => handleViewUser(u)}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#77101F] hover:underline cursor-pointer"
+                            title="View uploaded KYC documents"
+                          >
+                            <FileText className="w-3 h-3" />
+                            <span>
+                              {u.kycDocuments.length} KYC {u.kycDocuments.length === 1 ? 'Doc' : 'Docs'}
+                            </span>
+                          </button>
                         )}
-                      </button>
+                      </div>
                     </td>
 
                     {/* Status Toggle */}
@@ -798,6 +844,134 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ initialFilter }) => {
                 </div>
               </div>
 
+              {/* Uploaded KYC Documents */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#77101F]" />
+                    <span>Uploaded KYC Documents ({selectedUser.kycDocuments?.length || 0})</span>
+                  </h4>
+                  {selectedUser.kycStatus && (
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        selectedUser.kycStatus === 'Verified'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : selectedUser.kycStatus === 'Rejected'
+                          ? 'bg-red-100 text-red-800'
+                          : selectedUser.kycStatus === 'Pending Review'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {selectedUser.kycStatus}
+                    </span>
+                  )}
+                </div>
+
+                {!selectedUser.kycDocuments || selectedUser.kycDocuments.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+                    This user has not uploaded any KYC documents yet.
+                  </p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {selectedUser.kycDocuments.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900">{doc.docType}</span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  doc.status === 'Verified'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : doc.status === 'Rejected'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                {doc.status}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-500 truncate">
+                              {doc.fileName}
+                              {doc.documentNumber ? ` • ID: ${doc.documentNumber}` : ''}
+                              {' • '}
+                              {new Date(doc.uploadedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewKycDoc(doc)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-bold rounded-lg text-[11px] cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View</span>
+                            </button>
+                            {doc.status !== 'Verified' && (
+                              <button
+                                type="button"
+                                disabled={kycActionLoadingId === doc.id}
+                                onClick={() => handleReviewKycDoc(selectedUser.id, doc.id, 'Verified')}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] cursor-pointer disabled:opacity-50"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                            )}
+                            {doc.status !== 'Rejected' && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectingDocId(rejectingDocId === doc.id ? null : doc.id);
+                                  setRejectReasonText('');
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold rounded-lg text-[11px] cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {doc.rejectionReason && (
+                          <div className="text-[11px] text-red-700 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5">
+                            <strong>Rejection Note:</strong> {doc.rejectionReason}
+                          </div>
+                        )}
+
+                        {rejectingDocId === doc.id && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <input
+                              type="text"
+                              value={rejectReasonText}
+                              onChange={(e) => setRejectReasonText(e.target.value)}
+                              placeholder="Optional reason for rejection..."
+                              className="flex-1 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#77101F]"
+                            />
+                            <button
+                              type="button"
+                              disabled={kycActionLoadingId === doc.id}
+                              onClick={() =>
+                                handleReviewKycDoc(selectedUser.id, doc.id, 'Rejected', rejectReasonText.trim())
+                              }
+                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-[11px] cursor-pointer disabled:opacity-50"
+                            >
+                              Confirm Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Associated Properties */}
               <div>
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
@@ -826,7 +1000,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ initialFilter }) => {
                           </div>
                         </div>
                         <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-md text-[10px]">
-                          {p.saleDeedVerified ? 'Verified Deed' : 'Pending Deed'}
+                          {p.saleDeedVerified ? 'Verified Listing' : 'Pending Review'}
                         </span>
                       </div>
                     ))}
@@ -1336,6 +1510,61 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ initialFilter }) => {
               >
                 {actionLoading ? 'Deleting...' : 'Yes, Delete'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* KYC Document Preview Modal */}
+      {previewKycDoc && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPreviewKycDoc(null);
+          }}
+        >
+          <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="min-w-0">
+                <h4 className="text-sm font-extrabold text-slate-900 truncate">
+                  {previewKycDoc.docType} — {previewKycDoc.fileName}
+                </h4>
+                <p className="text-xs text-slate-500">
+                  {selectedUser?.name}
+                  {previewKycDoc.documentNumber ? ` • ID: ${previewKycDoc.documentNumber}` : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={resolveProductionUrl(previewKycDoc.fileUrl)}
+                  download={previewKycDoc.fileName}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewKycDoc(null)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 max-h-[75vh] overflow-auto flex items-center justify-center">
+              {previewKycDoc.mimeType?.includes('pdf') ? (
+                <iframe
+                  src={resolveProductionUrl(previewKycDoc.fileUrl)}
+                  title={previewKycDoc.fileName}
+                  className="w-full h-[65vh] rounded-xl border border-slate-200 bg-white"
+                />
+              ) : (
+                <img
+                  src={resolveProductionUrl(previewKycDoc.fileUrl)}
+                  alt={previewKycDoc.docType}
+                  className="max-w-full max-h-[65vh] object-contain rounded-xl border border-slate-200 bg-white"
+                />
+              )}
             </div>
           </div>
         </div>

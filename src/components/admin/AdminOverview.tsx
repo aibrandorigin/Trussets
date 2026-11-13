@@ -439,7 +439,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
       <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <div className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-1">Administrative Shortcut</div>
-          <h4 className="text-base font-black">Fast-track Title Deed Verifications</h4>
+          <h4 className="text-base font-black">Fast-track Property &amp; Owner Verifications</h4>
           <p className="text-xs text-slate-400 mt-0.5">
             There are currently {kpis?.pendingProperties} properties and {kpis?.unverifiedUsers} users waiting for verification.
           </p>
@@ -449,7 +449,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('properties', { verificationStatus: 'Pending' })}
             className="px-4 py-2.5 bg-white text-slate-900 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
           >
-            Review Property Deeds
+            Review Properties
           </button>
           <button
             onClick={() => onNavigate('users', { verified: 'false' })}

@@ -17,10 +17,21 @@ const FALLBACK_API_ORIGIN = 'https://www.trussets.com';
 
 export function isNativeAndroidOrIOS(): boolean {
   try {
-    if (Capacitor.isNativePlatform()) {
-      return true;
-    }
     if (typeof window !== 'undefined') {
+      const search = window.location.search || '';
+      if (search.includes('platform=app') || search.includes('platform=android') || search.includes('app=1')) {
+        return true;
+      }
+      if ((window as any).Capacitor?.isNativePlatform?.()) {
+        return true;
+      }
+      if (Capacitor.isNativePlatform()) {
+        return true;
+      }
+      const platform = Capacitor.getPlatform();
+      if (platform === 'android' || platform === 'ios') {
+        return true;
+      }
       const protocol = window.location.protocol;
       const host = window.location.hostname;
       if (

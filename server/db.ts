@@ -84,6 +84,23 @@ export interface DatabaseSchema {
       description: string;
       date: string;
     }>;
+    kycStatus?: 'Not Submitted' | 'Pending Review' | 'Verified' | 'Rejected';
+    kycRejectionReason?: string;
+    kycDocuments?: Array<{
+      id: string;
+      docType: string;
+      documentNumber?: string;
+      fileName: string;
+      mimeType: string;
+      fileSize?: number;
+      fileUrl: string;
+      dataUrl?: string;
+      status: 'Pending' | 'Verified' | 'Rejected';
+      rejectionReason?: string;
+      uploadedAt: string;
+      reviewedAt?: string;
+      reviewedBy?: string;
+    }>;
   }>;
   properties: Array<any>;
   buyingPlans: Array<{
@@ -318,6 +335,11 @@ export interface SubscriptionRecord {
 
 let dbCache: DatabaseSchema | null = null;
 let lastDbMtimeMs = 0;
+let allowCloudSyncOnBoot = false;
+
+export function setCloudBootSyncReady(ready: boolean): void {
+  allowCloudSyncOnBoot = ready;
+}
 
 // Atomic database write with UNIQUE(mobile_normalized) database constraint enforcement and cloud persistence
 export function saveDb(data: DatabaseSchema, syncToCloud = true): void {
@@ -393,7 +415,7 @@ export function saveDb(data: DatabaseSchema, syncToCloud = true): void {
     }
 
     // Asynchronously synchronize canonical data to persistent Cloud SQL database
-    if (syncToCloud) {
+    if (syncToCloud && allowCloudSyncOnBoot) {
       import('./cloudSqlSync.ts')
         .then(({ pushToCloudSql }) => pushToCloudSql(data))
         .catch((err) => console.warn('[CLOUD SQL SYNC] Cloud SQL sync warning:', err));
@@ -546,7 +568,7 @@ function generateInitialDatabase(): DatabaseSchema {
           },
         ],
         activities: [
-          { id: 'act-4', type: 'Verification', description: 'Submitted 30-year EC documents', date: '2026-06-20 11:45' },
+          { id: 'act-4', type: 'Verification', description: 'Submitted KYC verification documents', date: '2026-06-20 11:45' },
         ],
       },
       {
@@ -752,7 +774,7 @@ function generateInitialDatabase(): DatabaseSchema {
       {
         id: 'plan-buy-silver',
         name: 'Silver Owner Express',
-        description: 'Enhanced visibility with automated title verification and direct WhatsApp leads.',
+        description: 'Enhanced visibility with automated owner verification and direct WhatsApp leads.',
         price: 1999,
         listingsAllowed: 2,
         validityDays: 60,
@@ -760,7 +782,7 @@ function generateInitialDatabase(): DatabaseSchema {
         additionalPoints: [
           '2 Verified Listings with Trust Badge',
           'Featured in City Category Bar',
-          'Fast-Track Title Deed Check',
+          'Fast-Track Owner Verification',
           'Direct Owner-Buyer Connect',
           'Instant SMS & WhatsApp Alerts',
         ],
@@ -772,17 +794,17 @@ function generateInitialDatabase(): DatabaseSchema {
       {
         id: 'plan-buy-gold',
         name: 'Gold Prime Seller',
-        description: 'Maximum exposure on TrustSets homepage, priority deed audit, and high-intent buyer inquiries.',
+        description: 'Maximum exposure on TrustSets homepage, priority listing audit, and high-intent buyer inquiries.',
         price: 4999,
         listingsAllowed: 5,
         validityDays: 90,
         categoriesAllowed: ['plots', 'lands', 'apartments', 'villas', 'commercial', 'farmhouses'],
         additionalPoints: [
-          '5 Prime Listings with Verified Deed Badge',
+          '5 Prime Listings with Verified Owner Badge',
           'Top of Search Placement across City',
           'Featured Tag on Homepage Carousel',
           'Dedicated TrustSets Relationship Lead',
-          'Priority 30-Year EC Verification Support',
+          'Priority Owner Verification Support',
           'Social Media & Email Blast Promotion',
         ],
         status: 'Active',
@@ -887,7 +909,7 @@ function generateInitialDatabase(): DatabaseSchema {
         },
         {
           id: 'ban-desk-2',
-          title: 'Verified Title Deeds & 30-Year EC',
+          title: 'Verified Direct Owners & Zero Brokerage',
           altText: 'No fake listings verified land and villas on Trussets',
           imageUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&auto=format&fit=crop&q=80',
           clickUrl: '#listings-container',
@@ -967,32 +989,24 @@ function generateInitialDatabase(): DatabaseSchema {
     blogs: [
       {
         id: 'blog-1',
-        title: 'How to Check 30-Year Encumbrance Certificates (EC) in India Before Buying Land',
-        slug: 'how-to-check-encumbrance-certificate-ec-india',
-        shortDescription: 'A complete step-by-step legal guide on verifying property title deeds, Meeseva/IGRS portals, and spotting fake registration claims.',
-        fullContent: `Buying real estate is one of the largest financial commitments anyone makes. Yet thousands of buyers fall prey to disputed properties or forged title deeds.
-
-### What is an Encumbrance Certificate (EC)?
-An Encumbrance Certificate contains registered transaction records against a specific survey number, plot, or flat for a designated timeframe. It discloses:
-1. Prior registered sale deeds
-2. Active mortgages with banks
-3. Court attachments or injunctions
-4. Partition deeds and gift deeds
+        title: 'How to Verify Property Ownership Documents in India Before Buying Land',
+        slug: 'how-to-verify-property-ownership-documents-india',
+        shortDescription: 'A complete step-by-step guide on checking state registration portals and spotting fake owner claims.',
+        fullContent: `Buying real estate is one of the largest financial commitments anyone makes. Yet buyers often face unverified brokers or unclear ownership claims.
 
 ### Steps to Verify Online:
 - Visit your state registration portal (e.g. IGRS Telangana, Kaveri Karnataka, or IGR Maharashtra).
 - Enter the Sub-Registration Office (SRO), district, survey number, and house number.
-- Always demand a continuous **30-year search** rather than a shallow 5-year check.
-- Cross-verify link documents back to the original layout sanction.
+- Cross-verify layout sanction approvals and municipal records directly with the owner.
 
-TrustSets automatically flags properties where owners provide verified continuous EC certificates.`,
+TrustSets connects you directly with verified property owners with zero brokerage.`,
         featuredImage: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=1000&auto=format&fit=crop&q=80',
         author: 'Advocate V. Ramanathan (Legal Counsel)',
         category: 'Legal Verification',
-        tags: ['EC', 'Legal Check', 'Registration', 'Due Diligence'],
-        seoTitle: 'How to Verify 30-Year Encumbrance Certificate (EC) in India - TrustSets Guide',
-        seoDescription: 'Step by step legal guide on checking Encumbrance Certificate online to verify clean title deeds and avoid real estate litigation in India.',
-        seoKeywords: ['encumbrance certificate', 'EC check online', 'property title verification', 'igrs search'],
+        tags: ['Verification', 'Registration', 'Due Diligence'],
+        seoTitle: 'How to Verify Property Ownership Documents in India - TrustSets Guide',
+        seoDescription: 'Step by step guide on checking property registration records online and buying safely with zero brokerage in India.',
+        seoKeywords: ['property verification', 'igrs search', 'direct owner property'],
         publishDate: '2026-08-18',
         status: 'Published',
         views: 1420,
@@ -1034,7 +1048,7 @@ With TrustSets, buyers and owners connect directly with verified identity and di
         profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
         userType: 'Property Seller',
         location: 'Kokapet, Hyderabad',
-        testimonial: 'Listed my triplex villa on TrustSets without paying a single rupee of brokerage. Had 4 genuine high-budget buyers visit within 10 days. The title deed verification badge gave buyers instant confidence!',
+        testimonial: 'Listed my triplex villa on TrustSets without paying a single rupee of brokerage. Had 4 genuine high-budget buyers visit within 10 days. The verified owner badge gave buyers instant confidence!',
         rating: 5,
         status: 'Published',
         displayOrder: 1,
@@ -1266,7 +1280,7 @@ export function getDb(): DatabaseSchema {
           autoPublishVerifiedListings: true,
           maintenanceMode: false,
         };
-        saveDb(dbCache!);
+        saveDb(dbCache!, allowCloudSyncOnBoot);
       }
 
       // Safe User Migration: inspect existing records for duplicate normalized mobile numbers & initialize fields
@@ -1337,13 +1351,26 @@ export function getDb(): DatabaseSchema {
         });
 
         if (usersChanged) {
-          saveDb(dbCache!);
+          saveDb(dbCache!, allowCloudSyncOnBoot);
         }
       }
 
-      // Ensure properties have propertyStatus and propertyAge
+      // Ensure properties have propertyStatus, propertyAge, and clean verification copy (no legacy 30-Year EC / Title Deed strings)
       if (dbCache!.properties && Array.isArray(dbCache!.properties)) {
         let changed = false;
+        const cleanDeedText = (txt: string): string =>
+          txt
+            .replace(/Complete\s+\d+-year\s+Encumbrance\s+Certificate\s+verified/gi, 'Direct owner & property documents verified')
+            .replace(/with\s+\d+-year\s+Nil\s+Encumbrance\s+Certificate\s*\(EC\)\s*and\s*Clear\s*Sale\s*Deed/gi, 'with owner KYC and property documents verified')
+            .replace(/with\s+\d+-year\s+Nil\s+Encumbrance\s+Certificate\s*\(EC\)/gi, 'with owner KYC verified')
+            .replace(/Complete\s+title\s+deed\s+authenticated/gi, 'Direct owner listing verified')
+            .replace(/Immediate\s+clear\s+title\s+/gi, 'Ready for immediate sale ')
+            .replace(/Clear\s+title\s+with\s+spot\s+registration\s+clearance/gi, 'Spot registration available directly with owner')
+            .replace(/and\s+direct\s+clear\s+title/gi, 'and direct owner negotiation')
+            .replace(/100%\s+clear\s+title/gi, '100% owner-verified listing')
+            .replace(/Clear\s+Revenue\s+Land\s+Title/gi, 'Revenue Land Verified')
+            .replace(/Revenue\s+Department\s+Clear\s+Dharani\s+Title/gi, 'Revenue Department Verified');
+
         dbCache!.properties.forEach((p: any) => {
           if (p.propertyAge === undefined) {
             p.propertyAge = p.propertyAgeYears !== undefined ? p.propertyAgeYears : 0;
@@ -1353,9 +1380,71 @@ export function getDb(): DatabaseSchema {
             p.propertyStatus = (p.propertyAge === 0 || p.propertyAgeYears === 0) ? 'NEW' : (p.propertyAge && p.propertyAge > 1 ? 'OLD' : 'NEW');
             changed = true;
           }
+          if (p.primaryBadge === '✓ Verified Deed') {
+            p.primaryBadge = '✓ Verified Owner';
+            changed = true;
+          }
+          if (p.badgeType === 'verified-deed') {
+            p.badgeType = 'verified-owner';
+            changed = true;
+          }
+          if (typeof p.ecYears === 'number' && p.ecYears !== 0) {
+            p.ecYears = 0;
+            changed = true;
+          }
+          if (typeof p.description === 'string') {
+            const cleanedDesc = cleanDeedText(p.description);
+            if (cleanedDesc !== p.description) {
+              p.description = cleanedDesc;
+              changed = true;
+            }
+          }
+          if (typeof p.municipalApproval === 'string') {
+            const cleanedApproval = cleanDeedText(p.municipalApproval);
+            if (cleanedApproval !== p.municipalApproval) {
+              p.municipalApproval = cleanedApproval;
+              changed = true;
+            }
+          }
+          if (Array.isArray(p.locationHighlights)) {
+            const nextHighlights = p.locationHighlights.map((h: any) => (typeof h === 'string' ? cleanDeedText(h) : h));
+            if (JSON.stringify(nextHighlights) !== JSON.stringify(p.locationHighlights)) {
+              p.locationHighlights = nextHighlights;
+              changed = true;
+            }
+          }
         });
+
+        // Also sanitize legacy 30-Year EC / Title Deed strings in persisted plans, banners, blogs, testimonials
+        const cleanPlanStrings = (arr: any[] | undefined) => {
+          if (!Array.isArray(arr)) return;
+          arr.forEach((item: any) => {
+            if (typeof item.description === 'string') {
+              const next = item.description
+                .replace(/with\s+verified\s+30-year\s+EC\s+and\s+title\s+deed\s+authenticity/gi, 'with verified owner KYC and property documents')
+                .replace(/verified\s+30-year\s+EC\s*/gi, 'verified property ')
+                .replace(/title\s+deed\s+authenticity/gi, 'owner verification');
+              if (next !== item.description) {
+                item.description = next;
+                changed = true;
+              }
+            }
+            if (Array.isArray(item.additionalPoints)) {
+              const nextPts = item.additionalPoints
+                .filter((pt: string) => !/30-year\s*ec|encumbrance\s*certificate/i.test(pt))
+                .map((pt: string) => pt.replace(/Verified\s+Deed\s+Badge/gi, 'Verified Owner Badge'));
+              if (JSON.stringify(nextPts) !== JSON.stringify(item.additionalPoints)) {
+                item.additionalPoints = nextPts;
+                changed = true;
+              }
+            }
+          });
+        };
+        cleanPlanStrings(dbCache!.buyingPlans);
+        cleanPlanStrings(dbCache!.rentalPlans);
+
         if (changed) {
-          saveDb(dbCache!);
+          saveDb(dbCache!, allowCloudSyncOnBoot);
         }
       }
 
@@ -1389,7 +1478,7 @@ export function getDb(): DatabaseSchema {
             }
           });
         }
-        saveDb(dbCache!);
+        saveDb(dbCache!, allowCloudSyncOnBoot);
       }
 
       return dbCache!;
@@ -1424,7 +1513,7 @@ export function getDb(): DatabaseSchema {
   if (!fs.existsSync(DB_FILE) && !fs.existsSync(DB_BACKUP_FILE)) {
     console.log('[DATABASE BOOT] Initial setup: Generating first-time seed database.');
     const initialData = generateInitialDatabase();
-    saveDb(initialData);
+    saveDb(initialData, false);
     dbCache = initialData;
     return dbCache;
   }
@@ -1438,13 +1527,16 @@ export function getDb(): DatabaseSchema {
 
 function ensureSuperAdmin(db: DatabaseSchema) {
   let hasChanges = false;
-  const adminEmail = 'trussets@gmail.com';
-  const existing = db.admins.find(a => a.email.toLowerCase() === adminEmail);
-  if (!existing) {
+  if (!Array.isArray(db.admins)) {
+    db.admins = [];
+  }
+
+  // Only create default super admin when no admins exist at all so modified/renamed admins are NEVER reverted
+  if (db.admins.length === 0) {
     const { hash, salt } = hashPassword('111111');
     db.admins.push({
       id: 'admin-trussets-1',
-      email: adminEmail,
+      email: 'trussets@gmail.com',
       phone: '9652663763',
       name: 'TrustSets Super Administrator',
       role: 'super_admin',
@@ -1460,63 +1552,24 @@ function ensureSuperAdmin(db: DatabaseSchema) {
     });
     hasChanges = true;
   } else {
-    if (!existing.passwordHash || existing.role !== 'super_admin' || !existing.isOriginalSuperAdmin) {
-      const { hash, salt } = hashPassword('111111');
-      existing.isOriginalSuperAdmin = true;
-      existing.role = 'super_admin';
-      existing.roleTitle = existing.roleTitle || 'Super Administrator';
-      existing.department = existing.department || 'Platform Governance';
-      existing.status = 'Active';
-      existing.permissions = ['*'];
-      existing.passwordHash = hash;
-      existing.salt = salt;
-      hasChanges = true;
+    // Ensure a super_admin flag is present if none is marked isOriginalSuperAdmin, without overwriting credentials
+    const hasOriginalFlag = db.admins.some(a => a.isOriginalSuperAdmin);
+    if (!hasOriginalFlag) {
+      const firstSuper = db.admins.find(a => a.role === 'super_admin') || db.admins[0];
+      if (firstSuper) {
+        firstSuper.isOriginalSuperAdmin = true;
+        hasChanges = true;
+      }
     }
-  }
-
-  // Ensure an operations manager staff and a deed verification specialist staff exist
-  const opsStaff = db.admins.find(a => a.email.toLowerCase() === 'ops.manager@trussets.com');
-  if (!opsStaff) {
-    const { hash, salt } = hashPassword('staff123');
-    db.admins.push({
-      id: 'staff-ops-1',
-      email: 'ops.manager@trussets.com',
-      phone: '+91 9845012345',
-      name: 'Priya Sharma',
-      role: 'operations_admin',
-      roleTitle: 'Operations Manager',
-      department: 'Operations',
-      status: 'Active',
-      permissions: ['manage_properties', 'manage_users', 'manage_plans', 'view_analytics', 'manage_banners'],
-      assignedBy: 'TrustSets Super Administrator',
-      passwordHash: hash,
-      salt: salt,
-      createdAt: '2026-02-15T10:00:00.000Z',
-      lastLogin: '2026-09-17T14:30:00.000Z',
+    // Only backfill missing passwordHash if an old record had none; never overwrite an existing hash or email/name/phone
+    db.admins.forEach((a) => {
+      if (!a.passwordHash || !a.salt) {
+        const { hash, salt } = hashPassword('111111');
+        a.passwordHash = hash;
+        a.salt = salt;
+        hasChanges = true;
+      }
     });
-    hasChanges = true;
-  }
-
-  const deedStaff = db.admins.find(a => a.email.toLowerCase() === 'deeds.audit@trussets.com');
-  if (!deedStaff) {
-    const { hash, salt } = hashPassword('staff123');
-    db.admins.push({
-      id: 'staff-deed-1',
-      email: 'deeds.audit@trussets.com',
-      phone: '+91 9912345678',
-      name: 'Kavitha Reddy',
-      role: 'deed_auditor',
-      roleTitle: 'Deed Verification Specialist',
-      department: 'Legal & Title Compliance',
-      status: 'Active',
-      permissions: ['verify_deeds', 'view_properties', 'triage_fraud', 'view_audit_logs'],
-      assignedBy: 'TrustSets Super Administrator',
-      passwordHash: hash,
-      salt: salt,
-      createdAt: '2026-03-01T09:00:00.000Z',
-      lastLogin: '2026-09-18T08:15:00.000Z',
-    });
-    hasChanges = true;
   }
 
   if (Array.isArray(db.auditLogs)) {
@@ -1538,7 +1591,7 @@ function ensureSuperAdmin(db: DatabaseSchema) {
   }
 
   if (hasChanges) {
-    saveDb(db);
+    saveDb(db, allowCloudSyncOnBoot);
   }
 }
 

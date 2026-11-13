@@ -207,7 +207,7 @@ export const AdminPlans: React.FC<AdminPlansProps> = ({
         currentTab === 'buying'
           ? [
               'Direct WhatsApp & Call Connect',
-              'Verified Title Deed Seal',
+              'Verified Owner Seal',
               'Featured Search Placement',
             ]
           : [

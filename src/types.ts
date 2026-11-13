@@ -103,6 +103,30 @@ export interface CityInfo {
 
 export type ActivePage = 'home' | 'buy' | 'rent' | 'post-property' | 'profile' | 'admin' | 'property-plans' | 'terms' | 'privacy' | 'about' | 'help';
 
+export type KycDocType =
+  | 'Aadhaar Card'
+  | 'PAN Card'
+  | 'Passport'
+  | 'Voter ID'
+  | 'Driving License'
+  | 'Property Title Deed'
+  | 'Other';
+
+export interface KycDocumentRecord {
+  id: string;
+  docType: KycDocType | string;
+  documentNumber?: string;
+  fileName: string;
+  mimeType: string;
+  fileSize?: number;
+  fileUrl: string;
+  status: 'Pending' | 'Verified' | 'Rejected';
+  rejectionReason?: string;
+  uploadedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -125,6 +149,11 @@ export interface UserProfile {
   updated_at?: string;
   version?: number;
 
+  // KYC & Legal Verification
+  kycStatus?: 'Not Submitted' | 'Pending Review' | 'Verified' | 'Rejected';
+  kycRejectionReason?: string;
+  kycDocuments?: KycDocumentRecord[];
+
   // Plan & Subscription Information
   planId?: string;
   planName?: string;
@@ -138,6 +167,7 @@ export interface UserProfile {
   listingsUsed?: number;
   listedProperties?: PropertyListing[];
   propertiesCount?: number;
+  payments?: Array<any>;
 
   // Admin & Platform Staff Information
   isAdmin?: boolean;

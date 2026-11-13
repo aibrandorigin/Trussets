@@ -52,9 +52,13 @@ export async function pullFromCloudSql(): Promise<Partial<DatabaseSchema> | null
       }
     }
 
-    if (cloudData.properties && cloudData.properties.length > 0) {
+    if (
+      (cloudData.properties && cloudData.properties.length > 0) ||
+      (cloudData.admins && cloudData.admins.length > 0) ||
+      (cloudData.users && cloudData.users.length > 0)
+    ) {
       console.log(
-        `[CLOUD SQL SYNC] Pulled authoritative state from Cloud SQL: ${cloudData.properties?.length || 0} properties, ${cloudData.users?.length || 0} users.`
+        `[CLOUD SQL SYNC] Pulled authoritative state from Cloud SQL: ${cloudData.properties?.length || 0} properties, ${cloudData.users?.length || 0} users, ${cloudData.admins?.length || 0} admins.`
       );
       return cloudData;
     }
@@ -292,8 +296,15 @@ export async function pushToCloudSql(data: DatabaseSchema): Promise<void> {
       );
     }
 
-    // Sync admins
+    // Sync admins (upsert current admins and remove any deleted admins)
     if (data.admins && Array.isArray(data.admins)) {
+      const activeAdminIds = data.admins.map((a) => String(a.id)).filter(Boolean);
+      if (activeAdminIds.length > 0) {
+        await pool.query('DELETE FROM admins WHERE NOT (admin_id = ANY($1::text[]))', [activeAdminIds]);
+      } else {
+        await pool.query('DELETE FROM admins');
+      }
+
       for (const adm of data.admins) {
         if (!adm.id) continue;
         await pool.query(
@@ -331,13 +342,13 @@ export async function pushToCloudSql(data: DatabaseSchema): Promise<void> {
 }
 
 export async function initPersistentDatabase(localDb: DatabaseSchema): Promise<void> {
+  const { saveDb, setCloudBootSyncReady } = await import('./db.ts');
   try {
     console.log('[CLOUD SQL SYNC] Connecting to Cloud SQL database...');
     const cloudData = await pullFromCloudSql();
-    if (cloudData && cloudData.properties && cloudData.properties.length > 0) {
+    if (cloudData) {
       console.log('[CLOUD SQL SYNC] Restoring persistent Cloud SQL records into application runtime...');
       Object.assign(localDb, cloudData);
-      const { saveDb } = await import('./db.ts');
       saveDb(localDb, false);
       console.log('[CLOUD SQL SYNC] Cloud SQL restore complete. Authoritative production database active.');
     } else {
@@ -347,5 +358,7 @@ export async function initPersistentDatabase(localDb: DatabaseSchema): Promise<v
     }
   } catch (err) {
     console.error('[CLOUD SQL SYNC] Failed to initialize Cloud SQL persistent database:', err);
+  } finally {
+    setCloudBootSyncReady(true);
   }
 }

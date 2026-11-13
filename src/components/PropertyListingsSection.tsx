@@ -266,7 +266,7 @@ export const PropertyListingsSection: React.FC<PropertyListingsSectionProps> = (
       ]
     : [
         { id: 'all', label: 'All Statuses / Any' },
-        { id: 'Ready for Registration', label: 'Ready for Registration (Clear Title)' },
+        { id: 'Ready for Registration', label: 'Ready for Registration' },
         { id: 'Ready to Move In', label: 'Ready to Move In' },
         { id: 'Under Construction', label: 'Under Construction (2025+)' },
       ];
@@ -308,7 +308,7 @@ export const PropertyListingsSection: React.FC<PropertyListingsSectionProps> = (
             <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
               {isRent
                 ? 'Connect directly with property owners for zero-brokerage rental homes and commercial spaces with standard 11-month lease terms.'
-                : 'Authenticated 30-year Encumbrance Certificates (EC) and registered Title Deeds verified before listing. 0% broker commission.'}
+                : 'Connect directly with verified property owners for residential plots, villas, apartments, and commercial listings with 0% broker commission.'}
             </p>
           </div>
 

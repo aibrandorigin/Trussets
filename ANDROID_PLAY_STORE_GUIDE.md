@@ -3,8 +3,8 @@
 - **Application Name**: Trussets
 - **Developer**: Brand Origin
 - **Application ID (Package Name)**: `com.trussets.marketplace`
-- **Version Name**: `1.0.2`
-- **Version Code**: `3`
+- **Version Name**: `1.0.4`
+- **Version Code**: `5`
 - **Compile / Target SDK**: `36` (Android 16 / API 36 — Google Play Store compliant)
 - **Min SDK**: `24` (Android 7.0+)
 - **Production Backend**: `https://trussets.com`

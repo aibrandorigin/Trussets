@@ -78,7 +78,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             <span className="text-slate-200 hidden sm:inline">|</span>
             <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              {property.primaryBadge}
+              {property.primaryBadge === '✓ Verified Deed' ? '✓ Verified Owner' : property.primaryBadge}
             </span>
             <span className="hidden sm:inline-block px-2.5 py-0.5 rounded bg-red-50 text-[#881324] text-[11px] font-bold">
               0% Brokerage • Direct Owner
@@ -194,7 +194,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 </span>
                 <h4 className="font-bold text-slate-900 text-sm">{property.uploaderName}</h4>
                 <p className="text-[11px] text-emerald-700 font-semibold">
-                  ✓ Aadhaar & Title Audited (Zero Brokerage)
+                  ✓ Aadhaar &amp; KYC Verified (Zero Brokerage)
                 </p>
               </div>
             </div>
@@ -226,21 +226,13 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             </div>
           )}
 
-          {/* Trust & KYC Verification Matrix */}
+          {/* Property Verification & Approvals */}
           <div>
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#881324]" />
-              Mandatory Legal & Verification Audit
+              Property Verification &amp; Approvals
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200">
-                <span className="text-[10px] text-slate-500 uppercase block font-semibold">Title Deed Status</span>
-                <span className="font-bold text-emerald-800 mt-0.5 block">✓ Registered Sale Deed Clear</span>
-              </div>
-              <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200">
-                <span className="text-[10px] text-slate-500 uppercase block font-semibold">Encumbrance (EC)</span>
-                <span className="font-bold text-emerald-800 mt-0.5 block">✓ {property.ecYears}-Year Nil EC</span>
-              </div>
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
               <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200">
                 <span className="text-[10px] text-slate-500 uppercase block font-semibold">Sanctioning Authority</span>
                 <span className="font-bold text-emerald-800 mt-0.5 block">{property.municipalApproval}</span>
@@ -248,7 +240,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[10px] text-slate-500 uppercase block font-semibold">RERA Status</span>
                 <span className="font-bold text-slate-800 mt-0.5 block">
-                  {property.reraNumber ? `Registered (${property.reraNumber})` : 'Individual Clear Title'}
+                  {property.reraNumber ? `Registered (${property.reraNumber})` : 'Individual Owner Listed'}
                 </span>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">

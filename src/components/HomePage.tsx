@@ -117,7 +117,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
           <p className="text-sm sm:text-base text-red-100/90 mt-4 max-w-2xl mx-auto leading-relaxed font-normal">
             Buy, rent, or sell verified properties across India with direct owner-to-buyer contact,
-            authenticated 30-year Encumbrance Certificates (EC), and zero middleman fees.
+            KYC-authenticated owners, and zero middleman fees.
           </p>
 
           {/* Quick Transaction Action Hub */}
@@ -202,20 +202,13 @@ export const HomePage: React.FC<HomePageProps> = ({
             })()}
           </div>
 
-          {/* 3 Core Trust Pillars */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 max-w-3xl mx-auto text-left">
+          {/* 2 Core Trust Pillars */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-2xl mx-auto text-left">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10">
               <CheckCircle2 className="w-5 h-5 text-amber-300 shrink-0" />
               <div>
                 <h4 className="text-xs font-bold text-white">0% Brokerage Guarantee</h4>
                 <p className="text-[11px] text-red-100/70">Never pay commissions to agents</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10">
-              <ShieldCheck className="w-5 h-5 text-emerald-300 shrink-0" />
-              <div>
-                <h4 className="text-xs font-bold text-white">Verified 30-Year Title Deeds</h4>
-                <p className="text-[11px] text-red-100/70">EC & legal clearance before tokens</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10">
@@ -452,7 +445,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </div>
                 <h4 className="text-base font-bold text-white mb-2">Looking to Buy Property?</h4>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Browse clear-title residential plots, gated villas, and luxury apartments. We authenticate Sub-Registration Office (SRO) details and 30-year Encumbrance Certificates.
+                  Browse residential plots, gated villas, and luxury apartments listed directly by genuine owners. Connect directly via phone and WhatsApp with 0% brokerage.
                 </p>
               </div>
               <button

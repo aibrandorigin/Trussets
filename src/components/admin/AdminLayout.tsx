@@ -173,6 +173,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     };
 
     initLayout();
+
+    const handleAdminUpdated = (e: Event) => {
+      const custom = e as CustomEvent;
+      if (custom.detail) {
+        setAdmin(custom.detail);
+      }
+    };
+    window.addEventListener('trussets:admin-updated', handleAdminUpdated);
+    return () => {
+      window.removeEventListener('trussets:admin-updated', handleAdminUpdated);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

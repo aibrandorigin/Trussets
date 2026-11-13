@@ -19,16 +19,28 @@ export async function startServer() {
   // Validate SMS gateway configuration on boot
   validateSmsConfigAtStartup();
 
-  // Initialize DB on boot and synchronize with persistent Cloud SQL database
+  // Initialize DB on boot and synchronize with persistent Cloud SQL database BEFORE accepting requests
   try {
     const localDb = getDb();
     console.log('Database initialized successfully.');
-    // Import and sync with Cloud SQL database
-    import('./cloudSqlSync.ts')
-      .then(({ initPersistentDatabase }) => initPersistentDatabase(localDb))
-      .catch((err) => console.warn('[CLOUD SQL SYNC] Bootstrap error:', err));
+    const { initPersistentDatabase } = await import('./cloudSqlSync.ts');
+    const { setCloudBootSyncReady } = await import('./db.ts');
+    await Promise.race([
+      initPersistentDatabase(localDb),
+      new Promise<void>((resolve) =>
+        setTimeout(() => {
+          console.warn('[CLOUD SQL SYNC] Boot sync timed out after 8s; continuing with local DB.');
+          setCloudBootSyncReady(true);
+          resolve();
+        }, 8000)
+      ),
+    ]);
   } catch (err) {
     console.error('Database initialization error:', err);
+    try {
+      const { setCloudBootSyncReady } = await import('./db.ts');
+      setCloudBootSyncReady(true);
+    } catch {}
   }
 
   // Parsers with generous limit for images
